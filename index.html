@@ -278,6 +278,9 @@ a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);col
 .relb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .reln{font-weight:650;line-height:1.3}.relm{font-size:13.5px;color:var(--muted);line-height:1.35}
 .rellink{font-size:13px;font-weight:600;text-decoration:none}
+.relweek{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 2px;text-align:center}
+.relweek h2{font-size:19px}.relweek .btn{font-size:26px;min-width:48px;min-height:44px}
+.linkbtn{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;padding:0;cursor:pointer}
 .relmore{padding:0 14px 14px 72px}.relmore p{margin:0 0 8px;font-size:14.5px;line-height:1.45}.relmore .chips a.chip{text-decoration:none;display:inline-flex;align-items:center}
 @media (max-width:380px){.relmore{padding-left:14px}}.chk{display:inline-flex;gap:8px;align-items:center;font-size:15px}
 /* TV */
@@ -1906,8 +1909,8 @@ view.addEventListener('touchend', ev => {
 /* Your TMDB key is kept on this device only, in its own little database: not in the code, not synced, not in backups.
    The phone asks TMDB directly; nothing goes through GitHub. TMDB release types: 4 = digital, 5 = physical. */
 const TMDB = 'https://api.themoviedb.org/3', TMDB_IMG = 'https://image.tmdb.org/t/p/';
-const REL_FRESH = 12 * 3600e3, REL_PAGES = 12, REL_BACK = 14, REL_AHEAD = 84, REL_POPULAR = 20;
-const relUi = { open: '', all: false, find: '', found: null, finding: false, err: '', loading: false, checking: false };
+const REL_FRESH = 12 * 3600e3, REL_PAGES = 5, REL_POPULAR = 20;
+const relUi = { week: 0, open: '', all: false, find: '', found: null, finding: false, err: '', loading: false, checking: false };
 const relMem = {}, relTried = {}, relDetTried = {};            // type -> { at, from, to, items }
 let relKey = null, relKeyLoaded = false, relGenres = null, relInfo = {};   // relInfo: movie id -> details (formats, rating, IMDb id)
 
@@ -1936,13 +1939,16 @@ const relType = () => (state.rel.type === 'digital' ? 4 : 5);
 const slimMovie = (m, at) => ({ id: m.id, title: str(m.title).slice(0, 120), date: str(at || m.release_date), year: str(m.release_date).slice(0, 4), poster: str(m.poster_path),
   votes: m.vote_count || 0, rating: Math.round((m.vote_average || 0) * 10) / 10, pop: m.popularity || 0, genres: (m.genre_ids || []).slice(0, 3), sum: str(m.overview).slice(0, 700) });
 
+/* one week (Sunday–Saturday) of US releases of the chosen type */
+const relWeek = (off = relUi.week) => { const ws = weekStart(todayIso()), d = parseIso(ws); d.setDate(d.getDate() + off * 7); const a = isoDate(d); d.setDate(d.getDate() + 6); return [a, isoDate(d)]; };
+const relKeyOf = (t, ws) => `rel:${t}:${ws}`;
 async function relLoad(force) {
-  const t = relType(), from = relDay(-REL_BACK), to = relDay(REL_AHEAD);
-  let hit = relMem[t] || await relCacheGet('rel:' + t);
-  if (hit && hit.from === from && !force && Date.now() - hit.at < REL_FRESH) { const had = relMem[t] === hit; relMem[t] = hit; if (!had && route() === 'releases') renderIfSafe(); return; }
-  if (hit && !relMem[t]) { relMem[t] = hit; if (route() === 'releases') renderIfSafe(); }   /* show the saved copy while a fresh one loads */
-  if (relUi.loading || (!force && Date.now() - (relTried[t] || 0) < 120e3)) return;   /* after a failed try, wait 2 minutes (or Refresh) */
-  relUi.loading = true; relUi.err = ''; relTried[t] = Date.now();
+  const t = relType(), [from, to] = relWeek(), k = relKeyOf(t, from);
+  let hit = relMem[k] || await relCacheGet(k);
+  if (hit && !force && Date.now() - hit.at < REL_FRESH) { const had = relMem[k] === hit; relMem[k] = hit; if (!had && route() === 'releases') renderIfSafe(); return; }
+  if (hit && !relMem[k]) { relMem[k] = hit; if (route() === 'releases') renderIfSafe(); }   /* show the saved copy while a fresh one loads */
+  if (relUi.loading || (!force && Date.now() - (relTried[k] || 0) < 120e3)) return;   /* after a failed try, wait 2 minutes (or Refresh) */
+  relUi.loading = true; relUi.err = ''; relTried[k] = Date.now();
   try {
     if (!relGenres) { relGenres = await relCacheGet('genres'); if (!relGenres) { const g = await tmdbGet('/genre/movie/list', { language: 'en-US' }); relGenres = Object.fromEntries((g.genres || []).map(x => [x.id, x.name])); relCachePut('genres', relGenres); } }
     const items = [], seen = new Set();
@@ -1951,10 +1957,24 @@ async function relLoad(force) {
       for (const m of r.results || []) if (!seen.has(m.id) && m.release_date) { seen.add(m.id); items.push(slimMovie(m)); }   /* with region + release type, release_date is the US date of that type */
       if (page >= (r.total_pages || 1)) break;
     }
-    hit = { at: Date.now(), from, to, items }; relMem[t] = hit; relCachePut('rel:' + t, hit);
-  } catch (e) { console.warn(e); relUi.err = e.auth ? e.message : navigator.onLine ? 'TMDB didn’t answer. Try again in a minute.' : 'You’re offline.'; if (hit) relMem[t] = hit; }
+    hit = { at: Date.now(), from, to, items }; relMem[k] = hit; relCachePut(k, hit);
+  } catch (e) { console.warn(e); relUi.err = e.auth ? e.message : navigator.onLine ? 'TMDB didn’t answer. Try again in a minute.' : 'You’re offline, and this week isn’t saved on this device.'; if (hit) relMem[k] = hit; }
   finally { relUi.loading = false; }
   if (route() === 'releases') renderIfSafe();
+  /* keep the week before and after ready, so ‹ › are instant */
+  if (!force) for (const o of [1, -1]) { const ws = relWeek(relUi.week + o)[0]; if (!relMem[relKeyOf(t, ws)] && !(await relCacheGet(relKeyOf(t, ws)))) { await relPreload(t, relUi.week + o); } }
+}
+async function relPreload(t, off) {
+  const [from, to] = relWeek(off), k = relKeyOf(t, from);
+  try {
+    const items = [], seen = new Set();
+    for (let page = 1; page <= REL_PAGES; page++) {
+      const r = await tmdbGet('/discover/movie', { region: 'US', with_release_type: String(t), 'release_date.gte': from, 'release_date.lte': to, sort_by: 'popularity.desc', include_adult: 'false', language: 'en-US', page: String(page) });
+      for (const m of r.results || []) if (!seen.has(m.id) && m.release_date) { seen.add(m.id); items.push(slimMovie(m)); }
+      if (page >= (r.total_pages || 1)) break;
+    }
+    const hit = { at: Date.now(), from, to, items }; relMem[k] = hit; relCachePut(k, hit);
+  } catch { /* fine: it loads when you go there */ }
 }
 /* details on tap (and for movies you watch for): every US release date, disc formats, rating, IMDb id */
 async function relDetails(id, force) {
@@ -1978,10 +1998,6 @@ async function relDetails(id, force) {
 const relFmt = iso => parseIso(iso).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 const relWatching = id => state.rel.follow.some(f => f.id === id);
 const weekStart = iso => { const d = parseIso(iso); d.setDate(d.getDate() - d.getDay()); return isoDate(d); };   // weeks start Sunday, like the calendar
-function weekLabel(ws) {
-  const cur = weekStart(todayIso()), n = Math.round((parseIso(ws) - parseIso(cur)) / (7 * 864e5));
-  return n === 0 ? 'This week' : n === 1 ? 'Next week' : n === -1 ? 'Last week' : n < -1 ? `${-n} weeks ago` : `Week of ${parseIso(ws).toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
-}
 function relRow(m) {
   const open = relUi.open === String(m.id), info = relInfo[m.id], w = relWatching(m.id);
   const gen = (m.genres || []).map(g => relGenres && relGenres[g]).filter(Boolean).slice(0, 2).join(', ');
@@ -2006,24 +2022,24 @@ function renderReleases() {
   html += `<div class="search tvsearch"><form id="rfindf" class="tvfind"><input id="rfind" type="search" placeholder="Search any movie" value="${esc(relUi.find)}" autocomplete="off" enterkeyhint="search" aria-label="Search any movie"><button type="submit" class="btn small primary">Search</button></form></div>`;
   if (relUi.finding || relUi.found) { view.innerHTML = html + relSearchHTML(); return; }
   if (my) { view.innerHTML = html + relWatchingHTML(); return; }
-  const hit = relMem[t];
-  if (!hit || hit.from !== relDay(-REL_BACK) || Date.now() - hit.at > REL_FRESH) relLoad();
+  const [from, to] = relWeek(), hit = relMem[relKeyOf(t, from)];
+  const n = relUi.week, label = n === 0 ? 'New Releases This Week' : n === 1 ? 'Next Week' : n === -1 ? 'Last Week' : n > 0 ? `${n} Weeks Ahead` : `${-n} Weeks Ago`;
+  const span = `${parseIso(from).toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${parseIso(to).toLocaleDateString([], { month: parseIso(from).getMonth() === parseIso(to).getMonth() ? undefined : 'short', day: 'numeric' })}`;
+  html += `<div class="relweek"><button type="button" class="btn small ghost" data-rel="wk" data-d="-1" aria-label="Previous week">‹</button><div><h2>${esc(label)}</h2><div class="muted">${esc(span)}${n ? ' · <button type="button" class="linkbtn" data-rel="wk" data-d="0">This week</button>' : ''}</div></div><button type="button" class="btn small ghost" data-rel="wk" data-d="1" aria-label="Next week">›</button></div>`;
+  if (!hit || Date.now() - hit.at > REL_FRESH) relLoad();
   if (!hit) { view.innerHTML = html + (relUi.err ? `<div class="empty"><h2>No list</h2><p>${esc(relUi.err)}</p><div class="foot"><button type="button" class="btn primary" data-rel="refresh">Try again</button></div></div>` : '<div class="empty"><p class="muted">Getting release dates from TMDB…</p></div>'); return; }
   const all = hit.items.slice().sort((a, b) => a.date.localeCompare(b.date) || b.pop - a.pop);
   const shown = relUi.all ? all : all.filter(m => m.votes >= REL_POPULAR || relWatching(m.id)), hidden = all.length - shown.length;
-  const mine = all.filter(m => relWatching(m.id));
-  if (mine.length) html += `<div class="sec-h"><span>Movies you’re watching for</span><span>${mine.length}</span></div><div class="card tvlist">${mine.map(relRow).join('')}</div>`;
-  let wk = '', openCard = false;
-  for (const m of shown) {
-    const ws = weekStart(m.date);
-    if (ws !== wk) { if (openCard) html += '</div>'; html += `<div class="sec-h"><span>${esc(weekLabel(ws))}</span></div><div class="card tvlist">`; wk = ws; openCard = true; }
+  let day = '', openCard = false;
+  for (const m of shown) {   /* by day: disc mostly Tuesdays, digital Tuesdays and Fridays */
+    if (m.date !== day) { if (openCard) html += '</div>'; html += `<div class="sec-h"><span>${esc(parseIso(m.date).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' }))}</span></div><div class="card tvlist">`; day = m.date; openCard = true; }
     html += relRow(m);
   }
   if (openCard) html += '</div>';
-  if (!shown.length) html += `<div class="empty"><h2>Nothing listed</h2></div>`;
+  if (!shown.length) html += `<div class="empty"><h2>Nothing listed${hidden ? ' among the bigger releases' : ''}</h2></div>`;
   if (hidden) html += `<div class="foot"><button type="button" class="btn small" data-rel="all">Show ${hidden} smaller release${hidden > 1 ? 's' : ''}</button></div>`;
   else if (relUi.all) html += `<div class="foot"><button type="button" class="btn small" data-rel="all">Show the bigger releases only</button></div>`;
-  html += `<p class="hint c" style="margin-top:22px">US ${t === 5 ? 'DVD / Blu-ray / 4K' : 'digital (buy or rent)'} release dates from 2 weeks ago to 12 weeks ahead${hit.at ? ` · updated ${esc(fmtTime(hit.at))}` : ''}.${relUi.err ? ` ${esc(relUi.err)}` : ''}<br>
+  html += `<p class="hint c" style="margin-top:22px">US ${t === 5 ? 'DVD / Blu-ray / 4K' : 'digital (buy or rent)'} releases${hit.at ? ` · updated ${esc(fmtTime(hit.at))}` : ''}.${relUi.err ? ` ${esc(relUi.err)}` : ''}<br>
     Dates come from TMDB’s community and can change. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
     <div class="foot"><button type="button" class="btn small ghost" data-rel="refresh">Refresh</button><button type="button" class="btn small ghost" data-rel="key">🔑 Key</button></div>`;
   view.innerHTML = html;
@@ -2081,6 +2097,7 @@ view.addEventListener('click', e => {
     case 'watch': { const m = relItem(id); if (m) relToggleWatch(m); break; }
     case 'watchid': { const f = state.rel.follow.find(x => x.id === id) || (relUi.found || []).find(x => x.id === id); if (f) relToggleWatch(f); break; }
     case 'all': relUi.all = !relUi.all; render(); break;
+    case 'wk': relUi.week = el.dataset.d === '0' ? 0 : relUi.week + +el.dataset.d; relUi.open = ''; relUi.all = false; render(); window.scrollTo(0, 0); break;
     case 'refresh': relLoad(true); render(); break;
     case 'refreshmine': for (const f of state.rel.follow) { delete relInfo[f.id]; delete relDetTried[f.id]; relCachePut('m:' + f.id, null); } render(); break;
     case 'key': relKeyDialog(); break;
@@ -2119,15 +2136,15 @@ const VA_YEARS = Object.keys(VA_RATES).map(Number).sort((a, b) => b - a);
 const vaUi = { year: VA_YEARS[0], yearly: false };
 const usd = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function renderVaPay() {
-  const y = VA_RATES[vaUi.year], prev = VA_RATES[vaUi.year - 1], k = vaUi.yearly ? 12 : 1;
+  const y = VA_RATES[vaUi.year], k = vaUi.yearly ? 12 : 1;
   let html = `<div class="search tvbar"><div class="tvdays tvslots">${VA_YEARS.map(yr => `<button type="button" class="chip" data-va="year" data-y="${yr}" aria-pressed="${vaUi.year === yr}">${yr}</button>`).join('')}
     <button type="button" class="chip" data-va="per" aria-pressed="${!vaUi.yearly}">Monthly</button><button type="button" class="chip" data-va="per" aria-pressed="${vaUi.yearly}">Yearly</button></div></div>
     <div class="card vatable"><table><thead><tr><th>Rating</th><th>Single</th><th>Married</th></tr></thead><tbody>
-    ${Object.keys(y.rows).map(Number).sort((a, b) => a - b).map(p => { const [s, m] = y.rows[p], up = prev && prev.rows[p] ? s - prev.rows[p][0] : 0;
-      return `<tr><th scope="row">${p}%</th><td>${usd(s * k)}${up > 0 && !vaUi.yearly ? `<span class="vaup">+${usd(up)}</span>` : ''}</td><td>${usd(m * k)}</td></tr>`; }).join('')}
+    ${Object.keys(y.rows).map(Number).sort((a, b) => a - b).map(p => { const [s, m] = y.rows[p];
+      return `<tr><th scope="row">${p}%</th><td>${usd(s * k)}</td><td>${usd(m * k)}</td></tr>`; }).join('')}
     </tbody></table></div>
     <p class="hint">${esc(y.note)}</p>
-    <p class="hint">Single = veteran alone. Married = veteran with a spouse, no children or dependent parents. At 10% and 20% the amount is the same either way. ${vaUi.yearly ? 'Yearly = monthly × 12.' : prev ? `Green = increase over ${vaUi.year - 1}.` : ''}</p>
+    <p class="hint">Single = veteran alone. Married = veteran with a spouse, no children or dependent parents. At 10% and 20% the amount is the same either way. ${vaUi.yearly ? 'Yearly = monthly × 12.' : ''}</p>
     <div class="foot"><a class="btn small" href="https://www.va.gov/disability/compensation-rates/veteran-rates/" target="_blank" rel="noopener">VA’s rate table</a></div>`;
   view.innerHTML = html;
 }
