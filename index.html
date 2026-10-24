@@ -221,6 +221,29 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .emo-pick{display:flex;flex-wrap:wrap;gap:6px}
 .emo-pick button{font-size:22px;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer}
 .emo-pick button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+/* Links / TV tabs */
+[hidden]{display:none!important}
+.apptabs{margin:12px 0 0}.apptabs .chip{font-size:15px}
+/* TV */
+.tvbar{padding-bottom:6px}
+.tvdays{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0;-webkit-overflow-scrolling:touch}.tvdays::-webkit-scrollbar{display:none}
+.tvdays .chip{flex:none;white-space:nowrap;padding:6px 12px}
+.tvsearch{position:static;padding-top:6px}
+.tvfind{display:flex;gap:8px}.tvfind input{flex:1;min-width:0;border-radius:12px;background:var(--card)}
+.tvlist{padding:0}
+.tvrow{border-top:1px solid var(--line)}.tvrow:first-child{border-top:0}
+.tvmain{display:flex;gap:12px;align-items:flex-start;width:100%;padding:11px 14px;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.tvmain.static{cursor:default;align-items:center}
+.tvt{flex:none;width:64px;font-size:14px;font-weight:700;color:var(--muted);padding-top:2px;font-variant-numeric:tabular-nums}
+.tvd{display:block;font-size:12px;font-weight:600}
+.tvb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tvn{font-weight:650;line-height:1.3}.tvn .badge{margin-left:6px}
+.tvm{font-size:13.5px;color:var(--muted);line-height:1.35}
+.tvstar{color:#f5b301}:root[data-theme="halloween"] .tvstar{color:#ffb02e}
+.tvrow.mine{background:var(--accent-soft)}.tvrow.mine .tvm{color:var(--ink);opacity:.75}
+.tvmore{padding:0 14px 14px 90px}.tvmore p{margin:0 0 8px;font-size:14.5px;line-height:1.45}
+.tvmore .chips a.chip{text-decoration:none;display:inline-flex;align-items:center}
+@media (max-width:380px){.tvmore{padding-left:14px}}
 </style>
 </head>
 <body>
@@ -807,7 +830,7 @@ const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a'
 const EMOJIS = ['🎬', '📺', '⬇️', '🗄️', '💻', '🖥️', '🇺🇸', '🩺', '💬', '🗳️', '📰', '🏈', '⚽', '🛒', '🏦', '✈️', '🍳', '🎵', '📷', '🏠', '🔧', '📈', '⭐', '🔗'];
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', groups: [], links: [], lastGroup: '' });
+const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', tab: 'links', tv: { follow: [] }, groups: [], links: [], lastGroup: '' });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
 const linkUrl = u => { const s = safeUrl(u); return s && s.length <= 2000 ? s : ''; };
 const ordOf = v => (isNum(v) ? v : null);
@@ -823,13 +846,20 @@ function normLink(l, groupIds) {
     note: clampStr(l.note, 300), added: isNum(l.added) ? l.added : Date.now(), o: ordOf(l.o), a: ordOf(l.a), opened: isNum(l.opened) ? l.opened : 0, uses: isNum(l.uses) ? Math.max(0, Math.floor(l.uses)) : 0
   };
 }
+/* TV shows followed on this device: [{ id (TVMaze show id), name, net }] */
+function normFollow(tv) {
+  const seen = new Set(), list = tv && Array.isArray(tv.follow) ? tv.follow : [];
+  return list.filter(f => f && Number.isInteger(f.id) && f.id > 0 && !seen.has(f.id) && seen.add(f.id)).slice(0, 300)
+    .map(f => ({ id: f.id, name: str(f.name).slice(0, 120) || 'Show', net: str(f.net).slice(0, 60) }));
+}
 function normState(s) {
   s = s && typeof s === 'object' ? s : {};
   const seen = new Set(), groups = (Array.isArray(s.groups) ? s.groups : []).map(normGroup).filter(g => g && !seen.has(g.id) && seen.add(g.id)).slice(0, MAX_GROUPS);
   const ids = new Set(groups.map(g => g.id)), lseen = new Set();
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
-  const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : /^cols/.test(str(s.view)) ? 'all' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto' };
+  const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : /^cols/.test(str(s.view)) ? 'all' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
+    tab: s.tab === 'tv' ? 'tv' : 'links', tv: { follow: normFollow(s.tv) } };
   resort(out); fillAllOrder(out); return out;
 }
 /* "All icons" has its own order (a), set by dragging there; links without one follow the grouped order */
@@ -946,7 +976,7 @@ let pendingRender = false;
 function renderIfSafe() {
   if (committing) return;
   const a = document.activeElement;
-  if ($('dialog[open]') || drag || (a && a.id === 'q' && a.value)) { pendingRender = true; return; }
+  if ($('dialog[open]') || drag || (a && (a.id === 'q' || a.id === 'tq' || a.id === 'tfind') && a.value)) { pendingRender = true; return; }
   render();
 }
 document.addEventListener('close', () => { if (pendingRender) setTimeout(() => { if (!$('dialog[open]')) { pendingRender = false; render(); } }, 0); }, true);
@@ -969,8 +999,17 @@ function linkHTML(l, mode) {
 }
 const block = (list, mode) => ((mode === 'icons' || mode === 'all') && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
 function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + groupName(l.group) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
+const tabsHTML = () => `<div class="seg apptabs" role="tablist"><button type="button" class="chip" role="tab" data-tab="links" aria-pressed="${state.tab !== 'tv'}">🔗 Links</button><button type="button" class="chip" role="tab" data-tab="tv" aria-pressed="${state.tab === 'tv'}">📺 TV</button></div>`;
 function render() {
   applyTheme();
+  const tvMode = state.tab === 'tv';
+  $('#title').textContent = tvMode ? 'TV' : 'Links';
+  $('#editBtn').hidden = $('#addBtn').hidden = tvMode;
+  if (tvMode) {
+    $('#viewBtn').textContent = '🎨'; $('#viewBtn').setAttribute('aria-label', 'Theme');
+    $('#sub').textContent = 'New and live episodes'; $('#syncSlot').innerHTML = syncBadgeHTML();
+    renderTV(); return;
+  }
   const mode = state.view, total = state.links.length;
   const vw = VIEWS.find(v => v[0] === mode) || VIEWS[0];
   $('#viewBtn').textContent = vw[2]; $('#viewBtn').setAttribute('aria-label', `View: ${vw[1]}. Change view`);
@@ -978,13 +1017,13 @@ function render() {
   $('#sub').textContent = total ? `${total} link${total === 1 ? '' : 's'}` : '';
   $('#syncSlot').innerHTML = syncBadgeHTML();
   if (!total) {
-    view.innerHTML = `<div class="empty"><div class="big">🔗</div><h2>No links yet</h2><p>Tap <b>+</b> to add one, or bring in a list.</p>
+    view.innerHTML = tabsHTML() + `<div class="empty"><div class="big">🔗</div><h2>No links yet</h2><p>Tap <b>+</b> to add one, or bring in a list.</p>
       ${Sync.status() === 'signed-out' ? '<p>Already have links on another device? Sign in to bring them here.</p><div class="foot"><button type="button" class="btn primary" data-action="sync-signin">Sign in</button></div>' : ''}
       <div class="foot"><button type="button" class="btn${Sync.status() === 'signed-out' ? '' : ' primary'}" data-act="add">Add a link</button><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="restore">Restore a backup</button></div></div>`;
     return;
   }
   const words = ui.q.toLowerCase().split(/\s+/).filter(Boolean);
-  let html = `<div class="search"><input id="q" type="search" placeholder="Search links" value="${esc(ui.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search links"></div>`;
+  let html = tabsHTML() + `<div class="search"><input id="q" type="search" placeholder="Search links" value="${esc(ui.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search links"></div>`;
   if (words.length) {
     const hits = state.links.filter(l => matches(l, words));
     html += hits.length ? `<div class="sec-h"><span>Results</span><span>${hits.length}</span></div>${block(hits, mode)}` : '<div class="empty"><h2>No matches</h2></div>';
@@ -1215,6 +1254,7 @@ view.addEventListener('contextmenu', e => { if (e.target.closest('#allGrid')) e.
 
 $('#addBtn').onclick = () => linkDialog(null);
 $('#viewBtn').onclick = async () => {
+  if (state.tab === 'tv') { await askDialog({ title: 'Theme', body: `<p class="muted">Each device keeps its own theme.</p>${themesHTML()}`, buttons: [{ label: 'Done', value: null, kind: 'primary' }] }); return; }
   const v = await askDialog({ title: 'View and theme', body: `<p class="muted">Each device keeps its own choice of view and theme.</p><h3>Theme</h3>${themesHTML()}<h3>View</h3>`, buttons: [...VIEWS.map(([k, label, sym]) => ({ label: `${sym}  ${label}${k === state.view ? '  ✓' : ''}`, value: k, kind: k === state.view ? 'primary' : '' })), { label: 'Cancel', value: null, kind: 'ghost' }] });
   if (v && v !== state.view) { state.view = v; save(); render(); }
 };
@@ -1245,6 +1285,256 @@ view.addEventListener('input', e => {
   ui.q = e.target.value; const pos = e.target.selectionStart; render();
   const q = $('#q'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch { /* fine */ } }
 });
+
+/* ===================== TV: what's new and live, from TVMaze ===================== */
+/* Listings come straight from TVMaze's public API on this device (nothing is stored in the repo). TVMaze lists new and
+   live episodes (with episode numbers) on broadcast, cable and streaming channels; it has no reruns, movies or channel
+   numbers. Its dates are Eastern; times here are shown in the device's own time zone. Followed shows stay on this device. */
+const TVM = 'https://api.tvmaze.com';
+const TV_DAYS = 7, TV_FRESH = 3 * 3600e3, TV_SHOW_FRESH = 12 * 3600e3;
+const tvUi = { errDay: null, err: '', day: 0, my: false, q: '', open: '', earlier: false, find: '', found: null, finding: false };
+const tvMem = new Map();      // ET date -> { at, items }
+const tvLoading = new Set(), tvTried = {};
+let tvShowInfo = {};          // show id -> { at, next, prev, status, name, net }
+let tvShowInfoLoaded = false;
+
+const tvToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const tvDayStart = off => { const d = tvToday(); d.setDate(d.getDate() + off); return d; };
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const etDate = (d, add = 0) => { const x = new Date(d); x.setDate(x.getDate() + add); return ymd(x); };
+const fmtTime = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+const fmtHour = t => new Date(t).toLocaleTimeString([], { hour: 'numeric' });
+const fmtDay = (t, long) => new Date(t).toLocaleDateString([], long ? { weekday: 'long', month: 'short', day: 'numeric' } : { weekday: 'short', month: 'numeric', day: 'numeric' });
+const stripTags = h => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, '\'').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+const followed = id => state.tv.follow.some(f => f.id === id);
+
+/* keep only what the screen uses (small enough to keep a week offline) */
+function slimEp(e, show) {
+  const s = show || e.show || (e._embedded && e._embedded.show) || {}, ch = s.network || s.webChannel || {};
+  return { id: e.id, sid: s.id, show: str(s.name), type: str(s.type), genres: (s.genres || []).slice(0, 3), net: str(ch.name), web: !s.network,
+    lang: s.language || '', cc: ch.country ? ch.country.code : '', imdb: (s.externals && s.externals.imdb) || '', url: str(s.url),
+    title: str(e.name), notime: !e.airtime, s: e.season, e: e.number, kind: str(e.type), at: Date.parse(e.airstamp) || 0, mins: e.runtime || s.runtime || s.averageRuntime || 0,
+    sum: stripTags(e.summary).slice(0, 600), ssum: stripTags(s.summary).slice(0, 600), status: str(s.status) };
+}
+/* streaming: English-language, US or worldwide services; YouTube channel uploads (mostly kids' cartoons) are left out */
+const keepWeb = x => (!x.lang || x.lang === 'English') && (!x.cc || x.cc === 'US') && !/^youtube$/i.test(x.net);
+
+async function tvFetchJSON(url) {
+  const r = await fetch(url, { cache: 'no-store' });
+  if (r.status === 429) { await new Promise(res => setTimeout(res, 1500)); return tvFetchJSON(url); }
+  if (!r.ok) throw new Error('TVMaze ' + r.status);
+  return r.json();
+}
+/* listings are kept in their own small database, so they stay out of backups (they can always be fetched again) */
+let tvDbP = null;
+const tvDb = () => (tvDbP = tvDbP || openDB('goobs-links-tv').catch(() => null));
+async function tvCacheGet(key) { try { const d = await tvDb(); return d ? JSON.parse((await idbGet(d, key)) || 'null') : null; } catch { return null; } }
+async function tvCachePut(key, v) { try { const d = await tvDb(); if (d) await idbPut(d, key, JSON.stringify(v)); } catch { /* fine: just not offline */ } }
+
+/* one Eastern date of listings (TV + streaming), from memory, the saved copy, or TVMaze */
+async function tvLoadDate(d, force) {
+  let hit = tvMem.get(d);
+  if (!hit) { hit = await tvCacheGet('tv:' + d); if (hit) tvMem.set(d, hit); }
+  if (hit && !force && Date.now() - hit.at < TV_FRESH) return hit;
+  if (!navigator.onLine && hit) return hit;
+  let tv, web;
+  try { [tv, web] = await Promise.all([tvFetchJSON(`${TVM}/schedule?country=US&date=${d}`), tvFetchJSON(`${TVM}/schedule/web?date=${d}`)]); }
+  catch (e) { if (hit) { console.warn(e); return hit; } throw e; }   // keep showing the saved copy
+  const items = tv.map(e => slimEp(e)).concat(web.map(e => slimEp(e)).filter(x => x.web && keepWeb(x)));
+  const seen = new Set(); hit = { at: Date.now(), items: items.filter(x => x.at && !seen.has(x.id) && seen.add(x.id)) };
+  tvMem.set(d, hit); tvCachePut('tv:' + d, hit);
+  return hit;
+}
+/* a local day needs its own Eastern date and the next one (late-night Eastern shows fall on the previous evening here) */
+async function tvLoadDay(off, force) {
+  const start = tvDayStart(off), key = off + (force ? 'f' : '');
+  if (tvLoading.has(key)) return; tvLoading.add(key); tvTried[off] = Date.now();
+  try { await Promise.all([etDate(start, -1), etDate(start), etDate(start, 1)].map(d => tvLoadDate(d, force))); }
+  catch (e) { console.warn(e); if (!tvHaveDay(off)) tvUi.errDay = off, tvUi.err = navigator.onLine ? 'TVMaze didn’t answer. Try again in a minute.' : 'You’re offline, and this day isn’t saved on this device yet.'; }
+  finally { tvLoading.delete(key); }
+  if (state.tab === 'tv') renderIfSafe();
+  tvTidyCache();
+}
+const tvHaveDay = off => { const s = tvDayStart(off); return [etDate(s), etDate(s, 1)].every(d => tvMem.has(d)); };
+function tvItemsForDay(off) {
+  const a = tvDayStart(off).getTime(), b = tvDayStart(off + 1).getTime(), seen = new Set(), out = [];
+  for (const d of [etDate(new Date(a), -1), etDate(new Date(a)), etDate(new Date(a), 1)]) {
+    const hit = tvMem.get(d); if (!hit) continue;
+    for (const x of hit.items) if (x.at >= a && x.at < b && !seen.has(x.id)) { seen.add(x.id); out.push(x); }
+  }
+  return out.sort((x, y) => x.at - y.at || x.show.localeCompare(y.show));
+}
+/* drop listings for days that have passed */
+async function tvTidyCache() {
+  const old = 'tv:' + ymd(new Date(Date.now() - 2 * 864e5));
+  for (const d of [...tvMem.keys()]) if ('tv:' + d < old) tvMem.delete(d);
+  try {
+    const d = await tvDb(); if (!d) return;
+    const tx = d.transaction('kv', 'readwrite'), st = tx.objectStore('kv'), q = st.getAllKeys();
+    q.onsuccess = () => { for (const k of q.result) if (typeof k === 'string' && k.startsWith('tv:') && k < old) st.delete(k); };
+  } catch { /* fine */ }
+}
+
+/* followed shows: next and last episode */
+async function tvLoadShowInfo(force) {
+  if (!tvShowInfoLoaded) { tvShowInfo = (await tvCacheGet('tvshows')) || {}; tvShowInfoLoaded = true; }
+  const todo = state.tv.follow.filter(f => force || !tvShowInfo[f.id] || Date.now() - tvShowInfo[f.id].at > TV_SHOW_FRESH);
+  if (!navigator.onLine) return;
+  for (const f of todo) {
+    try {
+      const s = await tvFetchJSON(`${TVM}/shows/${f.id}?embed[]=nextepisode&embed[]=previousepisode`), em = s._embedded || {};
+      tvShowInfo[f.id] = { at: Date.now(), status: str(s.status), net: str((s.network || s.webChannel || {}).name),
+        next: em.nextepisode ? slimEp(em.nextepisode, s) : null, prev: em.previousepisode ? slimEp(em.previousepisode, s) : null };
+      if (state.tab === 'tv' && tvUi.my) renderIfSafe();
+      await new Promise(r => setTimeout(r, 450));   // TVMaze allows about 20 calls per 10 seconds
+    } catch (e) { console.warn(e); break; }
+  }
+  tvCachePut('tvshows', tvShowInfo);
+}
+function tvFollow(x) {
+  const i = state.tv.follow.findIndex(f => f.id === x.sid);
+  if (i >= 0) { state.tv.follow.splice(i, 1); toast(`Stopped following ${x.show}`); }
+  else { state.tv.follow.push({ id: x.sid, name: x.show, net: x.net }); toast(`Following ${x.show}`); tvLoadShowInfo(); }
+  save(); render();
+}
+async function tvSearch() {
+  const q = tvUi.find.trim(); if (!q) { tvUi.found = null; render(); return; }
+  tvUi.finding = true; render();
+  try {
+    const r = await tvFetchJSON(`${TVM}/search/shows?q=${encodeURIComponent(q)}`);
+    tvUi.found = r.slice(0, 12).map(h => { const s = h.show; return { sid: s.id, show: str(s.name), net: str((s.network || s.webChannel || {}).name), yr: (s.premiered || '').slice(0, 4), status: str(s.status) }; });
+  } catch (e) { tvUi.found = []; toast(navigator.onLine ? 'TVMaze didn’t answer. Try again.' : 'You’re offline.'); }
+  tvUi.finding = false; render();
+  const f = $('#tfind'); if (f) f.focus();
+}
+
+/* ---------- screen ---------- */
+const epLabel = x => [x.s && x.e && x.s < 1000 ? `S${x.s} E${x.e}` : '',   /* daily shows number seasons by year: skip those */ x.title && x.title !== x.show && !/^episode \d+$/i.test(x.title) ? x.title : ''].filter(Boolean).join(' · ');
+function badges(x) {
+  const b = [];
+  if (x.s === 1 && x.e === 1) b.push('<span class="badge acc">Series premiere</span>');
+  else if (x.e === 1) b.push('<span class="badge acc">Season premiere</span>');
+  if (/special/.test(x.kind)) b.push('<span class="badge">Special</span>');
+  const now = Date.now(); if (!x.notime && x.at <= now && now < x.at + (x.mins || 30) * 6e4) b.push('<span class="badge ok">On now</span>');
+  return b.join('');
+}
+function tvRow(x, showDay) {
+  const open = tvUi.open === String(x.id), star = followed(x.sid);
+  const meta = [x.net, epLabel(x), x.type].filter(Boolean).join(' · ');
+  let html = `<div class="tvrow${open ? ' open' : ''}${star ? ' mine' : ''}"><button type="button" class="tvmain" data-tv="open" data-id="${x.id}" aria-expanded="${open}">
+    <span class="tvt">${showDay ? `<span class="tvd">${esc(fmtDay(x.at))}</span>` : ''}${x.notime ? 'All day' : esc(fmtTime(x.at))}</span>
+    <span class="tvb"><span class="tvn">${star ? '<span class="tvstar" aria-label="followed">★</span> ' : ''}${esc(x.show)}${badges(x)}</span><span class="tvm">${esc(meta)}</span></span></button>`;
+  if (open) {
+    const text = x.sum || x.ssum;
+    html += `<div class="tvmore">${text ? `<p>${esc(text)}</p>` : ''}<p class="muted">${[x.mins ? `${x.mins} min` : '', x.genres.join(', '), x.status === 'Ended' ? 'Final season' : ''].filter(Boolean).map(esc).join(' · ')}</p>
+      <div class="chips"><button type="button" class="chip" data-tv="follow" data-id="${x.id}" aria-pressed="${star}">${star ? '★ Following' : '☆ Follow'}</button>
+      ${x.imdb ? `<a class="chip" href="https://www.imdb.com/title/${esc(x.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : ''}
+      ${x.url ? `<a class="chip" href="${esc(x.url)}" target="_blank" rel="noopener">TVMaze</a>` : ''}</div></div>`;
+  }
+  return html + '</div>';
+}
+function tvDayChips() {
+  let h = `<div class="tvdays" role="tablist"><button type="button" class="chip" data-tv="my" aria-pressed="${tvUi.my}">★ My shows</button>`;
+  for (let i = 0; i < TV_DAYS; i++) {
+    const d = tvDayStart(i), label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString([], { weekday: 'short', day: 'numeric' });
+    h += `<button type="button" class="chip" data-tv="day" data-day="${i}" aria-pressed="${!tvUi.my && tvUi.day === i}">${esc(label)}</button>`;
+  }
+  return h + '</div>';
+}
+const tvItemById = id => { for (const hit of tvMem.values()) { const x = hit.items.find(i => String(i.id) === String(id)); if (x) return x; }
+  for (const k in tvShowInfo) for (const x of [tvShowInfo[k].next, tvShowInfo[k].prev]) if (x && String(x.id) === String(id)) return x; return null; };
+
+function renderTV() {
+  let html = tabsHTML() + `<div class="search tvbar">${tvDayChips()}</div>`;
+  if (tvUi.my) { view.innerHTML = html + tvMyShowsHTML(); return; }
+  const off = tvUi.day;
+  if (!tvHaveDay(off)) {
+    const failed = tvUi.errDay === off && tvUi.err;
+    if (!tvLoading.size && !failed) tvLoadDay(off);
+    view.innerHTML = html + (failed ? `<div class="empty"><h2>No listings</h2><p>${esc(tvUi.err)}</p><div class="foot"><button type="button" class="btn primary" data-tv="refresh">Try again</button></div></div>` : '<div class="empty"><p class="muted">Getting listings…</p></div>');
+    return;
+  }
+  const hit = tvMem.get(etDate(tvDayStart(off)));
+  if (hit && Date.now() - hit.at > TV_FRESH && navigator.onLine && Date.now() - (tvTried[off] || 0) > 120e3) tvLoadDay(off);   // refresh old listings quietly, at most every 2 minutes
+  let all = tvItemsForDay(off);
+  html += `<div class="search tvsearch"><input id="tq" type="search" placeholder="Search shows or channels" value="${esc(tvUi.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search shows or channels"></div>`;
+  const words = tvUi.q.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length) all = all.filter(x => words.every(w => `${x.show} ${x.net} ${x.title} ${x.type} ${x.genres.join(' ')}`.toLowerCase().includes(w)));
+  const tv = all.filter(x => !x.web), web = all.filter(x => x.web);
+  let list = tv, hidden = 0;
+  if (off === 0 && !tvUi.earlier && !words.length) {
+    const now = Date.now(), keep = tv.filter(x => x.at + (x.mins || 30) * 6e4 > now); hidden = tv.length - keep.length; list = keep;
+  }
+  const mine = all.filter(x => followed(x.sid));
+  if (mine.length && !words.length) html += `<div class="sec-h"><span>Your shows ${off === 0 ? 'today' : off === 1 ? 'tomorrow' : 'this day'}</span><span>${mine.length}</span></div><div class="card tvlist">${mine.map(x => tvRow(x)).join('')}</div>`;
+  if (hidden) html += `<div class="foot"><button type="button" class="btn small" data-tv="earlier">Show earlier today (${hidden})</button></div>`;
+  let lastHour = '';
+  if (!list.length && !web.length) html += `<div class="empty"><h2>${words.length ? 'No matches' : 'Nothing listed'}</h2></div>`;
+  let open = false;
+  for (const x of list) {
+    const hr = fmtHour(x.at);
+    if (hr !== lastHour) { if (open) html += '</div>'; html += `<div class="sec-h"><span>${esc(hr)}</span></div><div class="card tvlist">`; lastHour = hr; open = true; }
+    html += tvRow(x);
+  }
+  if (open) html += '</div>';
+  if (web.length) html += `<div class="sec-h"><span>Streaming</span><span>${web.length}</span></div><div class="card tvlist">${web.map(x => tvRow(x)).join('')}</div>`;
+  const zone = new Intl.DateTimeFormat([], { timeZoneName: 'short' }).formatToParts(new Date()).find(p => p.type === 'timeZoneName');
+  html += `<p class="hint c" style="margin-top:22px">${esc(fmtDay(tvDayStart(off), true))} · times in ${esc(zone ? zone.value : 'your time zone')}.<br>New and live episodes from <a href="https://www.tvmaze.com/" target="_blank" rel="noopener">TVMaze</a>; no reruns or movies.
+    ${hit ? `Updated ${esc(fmtTime(hit.at))}.` : ''}</p><div class="foot"><button type="button" class="btn small ghost" data-tv="refresh">Refresh</button></div>`;
+  view.innerHTML = html;
+}
+function tvMyShowsHTML() {
+  if (!tvShowInfoLoaded || state.tv.follow.some(f => !tvShowInfo[f.id])) tvLoadShowInfo();
+  let html = `<div class="search tvsearch"><form id="tfindf" class="tvfind"><input id="tfind" type="search" placeholder="Find a show to follow" value="${esc(tvUi.find)}" autocomplete="off" enterkeyhint="search" aria-label="Find a show to follow"><button type="submit" class="btn small primary">Find</button></form></div>`;
+  if (tvUi.finding) html += '<p class="muted c">Searching…</p>';
+  else if (tvUi.found) {
+    html += `<div class="sec-h"><span>Results</span><button type="button" class="btn small ghost" data-tv="clearfind">Close</button></div>`;
+    html += tvUi.found.length ? `<div class="card tvlist">${tvUi.found.map(r => `<div class="tvrow"><div class="tvmain static"><span class="tvb"><span class="tvn">${esc(r.show)}</span><span class="tvm">${esc([r.net, r.yr, r.status === 'Ended' ? 'Ended' : ''].filter(Boolean).join(' · '))}</span></span>
+      <button type="button" class="chip" data-tv="followid" data-sid="${r.sid}" aria-pressed="${followed(r.sid)}">${followed(r.sid) ? '★ Following' : '☆ Follow'}</button></div></div>`).join('')}</div>` : '<p class="muted c">No shows found.</p>';
+  }
+  const rows = state.tv.follow.map(f => ({ f, i: tvShowInfo[f.id] }));
+  rows.sort((a, b) => ((a.i && a.i.next && a.i.next.at) || 9e15) - ((b.i && b.i.next && b.i.next.at) || 9e15) || a.f.name.localeCompare(b.f.name));
+  html += `<div class="sec-h"><span>Shows you follow</span><span>${rows.length || ''}</span></div>`;
+  if (!rows.length) return html + '<div class="empty"><p>Tap ☆ Follow on any show in the listings, or find one above. Your shows then show up first each day, and here with their next episode.</p></div>';
+  html += `<div class="card tvlist">${rows.map(({ f, i }) => {
+    const n = i && i.next, p = i && i.prev;
+    const line = !i ? 'Checking…' : n ? `Next: ${fmtDay(n.at)} ${fmtTime(n.at)}${n.s && n.e && n.s < 1000 ? ` · S${n.s} E${n.e}` : ''}${n.title && !/^episode \d+$/i.test(n.title) ? ` · ${n.title}` : ''}`
+      : i.status === 'Ended' ? 'Ended' : `No new episode listed yet${p ? ` · last aired ${new Date(p.at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}`;
+    return `<div class="tvrow${n && n.at - Date.now() < 7 * 864e5 ? ' mine' : ''}"><div class="tvmain static"><span class="tvb"><span class="tvn">${esc(f.name)}</span><span class="tvm">${esc([i && i.net || f.net, line].filter(Boolean).join(' · '))}</span></span>
+      <button type="button" class="chip" data-tv="followid" data-sid="${f.id}" aria-pressed="true" aria-label="Stop following ${esc(f.name)}">★</button></div></div>`;
+  }).join('')}</div><div class="foot"><button type="button" class="btn small ghost" data-tv="refreshmine">Refresh</button></div>`;
+  return html;
+}
+
+/* ---------- taps ---------- */
+view.addEventListener('click', e => {
+  const tab = e.target.closest('[data-tab]');
+  if (tab) { state.tab = tab.dataset.tab; ui.edit = false; save(); render(); window.scrollTo(0, 0); return; }
+  const el = e.target.closest('[data-tv]'); if (!el) return;
+  switch (el.dataset.tv) {
+    case 'day': tvUi.my = false; tvUi.day = +el.dataset.day; tvUi.open = ''; tvUi.earlier = false; tvUi.errDay = null; render(); window.scrollTo(0, 0); break;
+    case 'my': tvUi.my = true; render(); window.scrollTo(0, 0); break;
+    case 'open': tvUi.open = tvUi.open === el.dataset.id ? '' : el.dataset.id; render(); break;
+    case 'follow': { const x = tvItemById(el.dataset.id); if (x) tvFollow(x); break; }
+    case 'followid': { const sid = +el.dataset.sid, f = state.tv.follow.find(v => v.id === sid), r = (tvUi.found || []).find(v => v.sid === sid);
+      tvFollow(f ? { sid, show: f.name, net: f.net } : r); break; }
+    case 'earlier': tvUi.earlier = true; render(); break;
+    case 'refresh': tvUi.errDay = null; for (let d = -1; d <= 1; d++) tvMem.delete(etDate(tvDayStart(tvUi.day), d)); tvLoadDay(tvUi.day, true); render(); break;
+    case 'refreshmine': tvLoadShowInfo(true); toast('Checking your shows…'); break;
+    case 'clearfind': tvUi.found = null; tvUi.find = ''; render(); break;
+  }
+});
+view.addEventListener('submit', e => { if (e.target.id !== 'tfindf') return; e.preventDefault(); tvUi.find = $('#tfind').value; tvSearch(); });
+view.addEventListener('input', e => {
+  if (e.target.id === 'tfind') { tvUi.find = e.target.value; return; }
+  if (e.target.id !== 'tq') return;
+  tvUi.q = e.target.value; const pos = e.target.selectionStart; render();
+  const q = $('#tq'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch { /* fine */ } }
+});
+/* back online, or a new day while the app stayed open */
+window.addEventListener('online', () => { if (state.tab === 'tv') { tvUi.errDay = null; renderIfSafe(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && state.tab === 'tv') renderIfSafe(); });
+
 
 (async function init() {
   try { db = await openDB(DB_NAME); const raw = await idbGet(db, 'state'); if (raw) state = normState(JSON.parse(raw)); }
