@@ -228,6 +228,7 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .tvbar{padding-bottom:6px}
 .tvdays{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0;-webkit-overflow-scrolling:touch}.tvdays::-webkit-scrollbar{display:none}
 .tvdays .chip{flex:none;white-space:nowrap;padding:6px 12px}
+.tvslots{margin-top:6px}.tvslots .chip{flex:1;min-height:32px;padding:4px 10px;font-size:13.5px}
 .tvsearch{position:static;padding-top:6px}
 .tvfind{display:flex;gap:8px}.tvfind input{flex:1;min-width:0;border-radius:12px;background:var(--card)}
 .tvlist{padding:0}
@@ -830,7 +831,7 @@ const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a'
 const EMOJIS = ['🎬', '📺', '⬇️', '🗄️', '💻', '🖥️', '🇺🇸', '🩺', '💬', '🗳️', '📰', '🏈', '⚽', '🛒', '🏦', '✈️', '🍳', '🎵', '📷', '🏠', '🔧', '📈', '⭐', '🔗'];
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', tab: 'links', tv: { follow: [] }, groups: [], links: [], lastGroup: '' });
+const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', tab: 'links', tv: { follow: [], slot: 'all' }, groups: [], links: [], lastGroup: '' });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
 const linkUrl = u => { const s = safeUrl(u); return s && s.length <= 2000 ? s : ''; };
 const ordOf = v => (isNum(v) ? v : null);
@@ -859,7 +860,7 @@ function normState(s) {
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
   const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : /^cols/.test(str(s.view)) ? 'all' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
-    tab: s.tab === 'tv' ? 'tv' : 'links', tv: { follow: normFollow(s.tv) } };
+    tab: s.tab === 'tv' ? 'tv' : 'links', tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all' } };
   resort(out); fillAllOrder(out); return out;
 }
 /* "All icons" has its own order (a), set by dragging there; links without one follow the grouped order */
@@ -1444,10 +1445,20 @@ function tvDayChips() {
 const tvItemById = id => { for (const hit of tvMem.values()) { const x = hit.items.find(i => String(i.id) === String(id)); if (x) return x; }
   for (const k in tvShowInfo) for (const x of [tvShowInfo[k].next, tvShowInfo[k].prev]) if (x && String(x.id) === String(id)) return x; return null; };
 
+/* time of day: All day, Now (on now or starting in the next 30 minutes; today only) or Prime time (starts 7–10 PM here) */
+const SLOTS = [['all', 'All day'], ['now', 'Now'], ['prime', 'Prime time 7–10']];
+const tvSlot = () => (state.tv.slot === 'now' && tvUi.day !== 0 ? 'all' : state.tv.slot || 'all');
+function inSlot(x, slot) {
+  if (slot === 'now') { const now = Date.now(); return !x.notime && x.at <= now + 30 * 6e4 && x.at + (x.mins || 30) * 6e4 > now; }
+  if (slot === 'prime') { const h = new Date(x.at).getHours(); return !x.notime && h >= 19 && h < 22; }
+  return true;
+}
+const tvSlotChips = (off, slot) => `<div class="tvdays tvslots">${SLOTS.filter(([k]) => k !== 'now' || off === 0).map(([k, label]) =>
+  `<button type="button" class="chip" data-tv="slot" data-slot="${k}" aria-pressed="${slot === k}">${esc(label)}</button>`).join('')}</div>`;
 function renderTV() {
-  let html = tabsHTML() + `<div class="search tvbar">${tvDayChips()}</div>`;
+  const off = tvUi.day, slot = tvSlot();
+  let html = tabsHTML() + `<div class="search tvbar">${tvDayChips()}${tvUi.my ? '' : tvSlotChips(off, slot)}</div>`;
   if (tvUi.my) { view.innerHTML = html + tvMyShowsHTML(); return; }
-  const off = tvUi.day;
   if (!tvHaveDay(off)) {
     const failed = tvUi.errDay === off && tvUi.err;
     if (!tvLoading.size && !failed) tvLoadDay(off);
@@ -1460,16 +1471,17 @@ function renderTV() {
   html += `<div class="search tvsearch"><input id="tq" type="search" placeholder="Search shows or channels" value="${esc(tvUi.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search shows or channels"></div>`;
   const words = tvUi.q.toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length) all = all.filter(x => words.every(w => `${x.show} ${x.net} ${x.title} ${x.type} ${x.genres.join(' ')}`.toLowerCase().includes(w)));
+  if (slot !== 'all') all = all.filter(x => inSlot(x, slot));
   const tv = all.filter(x => !x.web), web = all.filter(x => x.web);
   let list = tv, hidden = 0;
-  if (off === 0 && !tvUi.earlier && !words.length) {
+  if (off === 0 && slot === 'all' && !tvUi.earlier && !words.length) {
     const now = Date.now(), keep = tv.filter(x => x.at + (x.mins || 30) * 6e4 > now); hidden = tv.length - keep.length; list = keep;
   }
   const mine = all.filter(x => followed(x.sid));
   if (mine.length && !words.length) html += `<div class="sec-h"><span>Your shows ${off === 0 ? 'today' : off === 1 ? 'tomorrow' : 'this day'}</span><span>${mine.length}</span></div><div class="card tvlist">${mine.map(x => tvRow(x)).join('')}</div>`;
   if (hidden) html += `<div class="foot"><button type="button" class="btn small" data-tv="earlier">Show earlier today (${hidden})</button></div>`;
   let lastHour = '';
-  if (!list.length && !web.length) html += `<div class="empty"><h2>${words.length ? 'No matches' : 'Nothing listed'}</h2></div>`;
+  if (!list.length && !web.length) html += `<div class="empty"><h2>${words.length ? 'No matches' : slot === 'now' ? 'Nothing new or live right now' : slot === 'prime' ? 'Nothing listed in prime time' : 'Nothing listed'}</h2></div>`;
   let open = false;
   for (const x of list) {
     const hr = fmtHour(x.at);
@@ -1519,6 +1531,7 @@ view.addEventListener('click', e => {
     case 'followid': { const sid = +el.dataset.sid, f = state.tv.follow.find(v => v.id === sid), r = (tvUi.found || []).find(v => v.sid === sid);
       tvFollow(f ? { sid, show: f.name, net: f.net } : r); break; }
     case 'earlier': tvUi.earlier = true; render(); break;
+    case 'slot': state.tv.slot = el.dataset.slot; save(); tvUi.open = ''; render(); window.scrollTo(0, 0); break;
     case 'refresh': tvUi.errDay = null; for (let d = -1; d <= 1; d++) tvMem.delete(etDate(tvDayStart(tvUi.day), d)); tvLoadDay(tvUi.day, true); render(); break;
     case 'refreshmine': tvLoadShowInfo(true); toast('Checking your shows…'); break;
     case 'clearfind': tvUi.found = null; tvUi.find = ''; render(); break;
