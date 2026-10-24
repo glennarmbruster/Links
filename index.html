@@ -266,7 +266,7 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .calgrid .day.today .n{background:var(--accent);color:var(--accent-ink);font-weight:800}
 .calgrid .day.sel{background:var(--accent-soft)}
 .calgrid .dots{position:absolute;bottom:3px;display:flex;gap:3px;height:5px}
-.calgrid .dots i{width:5px;height:5px;border-radius:50%;background:var(--muted)}.calgrid .dots i.f{background:#e5484d}.calgrid .dots i.e{background:var(--accent)}.calgrid .dots i.t{background:#16a34a}
+.calgrid .dots i{width:5px;height:5px;border-radius:50%;background:var(--muted)}.calgrid .dots i.f{background:#e5484d}.calgrid .dots i.e{background:var(--accent)}.calgrid .dots i.t{background:#16a34a}.calgrid .dots i.w{background:#9333ea}
 .calday{margin-top:12px;padding:14px}
 .calday-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
 .wdname{font-size:26px;font-weight:800;line-height:1.1}
@@ -274,13 +274,13 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .calday .calitem:first-of-type{border-top:0}
 button.calitem{cursor:pointer}
 .calitem .tag{flex:none;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:var(--soft);color:var(--muted)}
-.calitem .tag.f{background:#fde8e6;color:#b42318}.calitem .tag.t{background:#dcf5e3;color:#166534;text-transform:none}
+.calitem .tag.f{background:#fde8e6;color:#b42318}.calitem .tag.w{background:#f3e8ff;color:#7e22ce;text-transform:none}.calitem .tag.t{background:#dcf5e3;color:#166534;text-transform:none}
 a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);color:var(--accent);text-transform:none}
 .calnote{display:block;font-size:13px}
 .calnone{margin:4px 0 0}
 .calup{padding:0 14px}.calup .calitem:first-child{border-top:0}
 .calup .when{flex:none;width:96px;font-size:14px;font-weight:700;color:var(--muted)}
-.calup .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted);align-self:center}.calup .dot.f{background:#e5484d}.calup .dot.e{background:var(--accent)}.calup .dot.t{background:#16a34a}
+.calup .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted);align-self:center}.calup .dot.f{background:#e5484d}.calup .dot.e{background:var(--accent)}.calup .dot.t{background:#16a34a}.calup .dot.w{background:#9333ea}
 .calopts{margin-top:14px}
 /* Movie releases */
 .relrow{border-top:1px solid var(--line)}.relrow:first-child{border-top:0}.relrow.mine{background:var(--accent-soft)}
@@ -290,6 +290,7 @@ a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);col
 .poster{flex:none;width:46px;height:69px;border-radius:6px;object-fit:cover;background:var(--soft);display:grid;place-items:center;font-size:22px}
 .relb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .reln{font-weight:650;line-height:1.3}.relm{font-size:13.5px;color:var(--muted);line-height:1.35}
+.relout{padding:12px 14px;margin:10px 0 0;border-left:4px solid var(--accent);font-size:14.5px}.relout b{display:block;margin-bottom:4px}.relout div{padding:2px 0}
 .relcast{margin:4px 0 10px;font-size:14.5px}.relcast p{margin:0 0 6px}.relcast ul{margin:0;padding:0;list-style:none;columns:1}.relcast li{padding:5px 0;border-top:1px solid var(--line)}.relcast li:first-child{border-top:0}.relcast a{text-decoration:none;font-weight:600}
 .relwhen{font-size:14px;line-height:1.4;font-weight:600;color:var(--ink)}.relwhen b{font-weight:600}.relwhen .muted{font-weight:400}
 .rellink{font-size:13px;font-weight:600;text-decoration:none}
@@ -919,7 +920,7 @@ const clampStr = (v, n) => str(v).trim().slice(0, n);
 /* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
 const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
   calendar: { name: 'Calendar', emoji: '', sub: () => `Today is ${new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}` },
-  releases: { name: 'Movie releases', emoji: '📀', sub: () => 'Digital and disc release dates' },
+  releases: { name: 'Movie releases', emoji: '📀', sub: () => { const n = relOutThisWeek().length; return n ? `★ ${n} you’re watching for ${n > 1 ? 'are' : 'is'} out this week` : 'Digital and disc release dates'; } },
   vapay: { name: 'VA Disability Pay', emoji: '🎖️', sub: () => `${VA_YEARS[0]} monthly rates, single and married` },
   calc: { name: 'Calculator', emoji: '', sub: () => 'Standard calculator' } };
 const appOf = url => { const m = /^app:(tv|calendar|releases|vapay|calc)$/.exec(str(url)); return m ? m[1] : ''; };
@@ -1066,16 +1067,21 @@ function commit() { save(); committing = true; try { Sync.touch(); } finally { c
 
 /* ---- sync: the same links on every device you sign in on (Firebase, the same account setup as Grocery and To-do).
    What syncs: links, groups and their order. What stays on each device: Recent, the list/icon view, cached site icons. ---- */
-const C_GROUPS = 'linkGroups', C_LINKS = 'links', C_TRIPS = 'trips';   /* trips: Planner's trips and events, for the Calendar */
+const C_GROUPS = 'linkGroups', C_LINKS = 'links', C_TRIPS = 'trips', C_FOLLOWS = 'linkFollows';   /* linkFollows: movies you watch for and TV shows you follow */   /* trips: Planner's trips and events, for the Calendar */
 const syncModel = {
-  colls: [C_GROUPS, C_LINKS, C_TRIPS],
+  colls: [C_GROUPS, C_LINKS, C_TRIPS, C_FOLLOWS],
   toEntities() {
     return [...state.groups.map(g => ({ coll: C_GROUPS, id: g.id, data: { name: g.name, o: g.o } })),
       ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, note: l.note, added: l.added, o: l.o, a: l.a } })),
-      ...state.planner.map(p => ({ coll: C_TRIPS, id: p.id, data: p.data }))];   /* handed back exactly as Planner wrote them */
+      ...state.planner.map(p => ({ coll: C_TRIPS, id: p.id, data: p.data })),
+      ...state.rel.follow.map(f => ({ coll: C_FOLLOWS, id: 'm' + f.id, data: { kind: 'movie', ref: f.id, name: f.title, poster: f.poster } })),
+      ...state.tv.follow.map(f => ({ coll: C_FOLLOWS, id: 't' + f.id, data: { kind: 'tv', ref: f.id, name: f.name, net: f.net } }))];   /* handed back exactly as Planner wrote them */
   },
   apply(out) {
-    const before = JSON.stringify([state.groups, state.links, state.planner]);
+    const before = JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow]);
+    const fl = (out[C_FOLLOWS] || []).map(r => r.data || {});
+    state.rel.follow = normRel({ follow: fl.filter(d => d.kind === 'movie').map(d => ({ id: d.ref, title: d.name, poster: d.poster })) }).follow;
+    state.tv.follow = normFollow({ follow: fl.filter(d => d.kind === 'tv').map(d => ({ id: d.ref, name: d.name, net: d.net })) });
     state.planner = (out[C_TRIPS] || []).map(r => ({ id: r.id, data: JSON.parse(JSON.stringify(r.data)) }));
     const groups = [], gids = new Set();
     for (const r of out[C_GROUPS] || []) { const g = normGroup({ ...r.data, id: r.id }); if (g && !gids.has(g.id)) { if (g.o == null) g.o = groups.length; gids.add(g.id); groups.push(g); } }
@@ -1090,7 +1096,8 @@ const syncModel = {
     /* the same address added on two devices before they were signed in: keep the first one */
     links.sort(byOrd); const urls = new Set();
     state.groups = groups; state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort(); fillAllOrder();
-    if (JSON.stringify([state.groups, state.links, state.planner]) === before) return;
+    if (JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow]) === before) return;
+    relWarm().then(c => { if (c) renderIfSafe(); });
     save(); renderIfSafe();
   }
 };
@@ -1530,7 +1537,7 @@ function tvFollow(x) {
   const i = state.tv.follow.findIndex(f => f.id === x.sid);
   if (i >= 0) { state.tv.follow.splice(i, 1); toast(`Stopped following ${x.show}`); }
   else { state.tv.follow.push({ id: x.sid, name: x.show, net: x.net }); toast(`Following ${x.show}`); tvLoadShowInfo(); }
-  save(); render();
+  commit();   /* shared with your other devices */
 }
 async function tvSearch() {
   const q = tvUi.find.trim(); if (!q) { tvUi.found = null; render(); return; }
@@ -1799,6 +1806,16 @@ function itemsOn(iso) {
     }
   }
   for (const e of eventsOn(iso)) out.push({ src: 'local', id: e.id, title: e.title, time: e.time, yearly: e.yearly, start: e.date, note: e.note });
+  /* movies you're watching for (digital / disc dates) and the shows you follow (new episodes) */
+  for (const f of state.rel.follow) {
+    const i = relInfo[f.id]; if (!i) continue;
+    const kinds = [i.digital === iso ? 'Digital' : '', i.disc === iso ? 'Disc' : ''].filter(Boolean);
+    if (kinds.length) out.push({ src: 'movie', id: String(f.id), title: f.title, kinds });
+  }
+  const eps = new Map();
+  for (const f of state.tv.follow) { const si = tvShowInfo[f.id]; if (si && si.next) eps.set(si.next.id, { ...si.next, show: f.name }); }
+  for (const hit of tvMem.values()) for (const x of hit.items) if (followed(x.sid) && !eps.has(x.id)) eps.set(x.id, x);
+  for (const x of eps.values()) if (x.at && isoDate(new Date(x.at)) === iso) out.push({ src: 'tv', id: String(x.sid || ''), title: x.show, time: x.notime ? '' : `${pad2(new Date(x.at).getHours())}:${pad2(new Date(x.at).getMinutes())}`, ep: epLabel(x), net: x.net });
   return out.sort((a, b) => (a.src === 'trip' ? -1 : 0) - (b.src === 'trip' ? -1 : 0) || (a.time || '99').localeCompare(b.time || '99') || a.title.localeCompare(b.title));
 }
 const yrsOf = (x, iso) => (x.yearly ? +iso.slice(0, 4) - +x.start.slice(0, 4) : 0);
@@ -1827,7 +1844,22 @@ function relDays(iso) {
   const abs = Math.abs(n), w = abs >= 14 ? ` (${abs % 7 ? 'about ' : ''}${Math.round(abs / 7)} weeks)` : '';
   return n > 0 ? `In ${abs.toLocaleString()} days${w}` : `${abs.toLocaleString()} days ago${w}`;
 }
+/* the Watching movies' dates and followed shows' next episodes come from what Movie releases and TV listings keep on the
+   device; fill in anything missing in the background (at most every few hours) */
+let calWatchAt = 0;
+async function calLoadWatch() {
+  if (Date.now() - calWatchAt < 3 * 3600e3) return; calWatchAt = Date.now();
+  await relWarm();
+  if (!tvShowInfoLoaded) { tvShowInfo = (await tvCacheGet('tvshows')) || {}; tvShowInfoLoaded = true; }
+  if (route() === 'calendar') renderIfSafe();
+  if (navigator.onLine) {
+    await tvLoadShowInfo();
+    if (await relLoadKey()) for (const f of state.rel.follow) if (!relInfo[f.id] || Date.now() - relInfo[f.id].at > REL_FRESH) await relDetails(f.id);
+    if (route() === 'calendar') renderIfSafe();
+  }
+}
 function renderCalendar() {
+  calLoadWatch();
   if (!calUi.sel) calGo(todayIso());
   const { y, m } = calUi, today = todayIso(), first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
   let html = `<div class="calbar"><label class="calgo"><span>Look up a date</span><input id="cgo" type="date" value="${esc(calUi.sel)}" aria-label="Look up a date"></label>
@@ -1838,11 +1870,11 @@ function renderCalendar() {
   const cells = Math.ceil((first + days) / 7) * 7;
   for (let i = 0; i < cells; i++) {
     const d = new Date(y, m, 1 - first + i), iso = isoDate(d), out = d.getMonth() !== m;
-    const hol = holidaysOn(iso), its = itemsOn(iso), ev = its.filter(x => x.src !== 'trip'), trip = its.some(x => x.src === 'trip'), fed = hol.some(h => h.fed);
+    const hol = holidaysOn(iso), its = itemsOn(iso), ev = its.filter(x => x.src === 'planner' || x.src === 'local'), trip = its.some(x => x.src === 'trip'), watch = its.some(x => x.src === 'movie' || x.src === 'tv'), fed = hol.some(h => h.fed);
     const cls = ['day', out ? 'out' : '', iso === today ? 'today' : '', iso === calUi.sel ? 'sel' : '', fed ? 'fed' : '', d.getDay() === 0 || d.getDay() === 6 ? 'we' : ''].filter(Boolean).join(' ');
     const label = `${WD[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}${hol.length ? ', ' + hol.map(h => h.name).join(', ') : ''}${ev.length ? `, ${ev.length} event${ev.length > 1 ? 's' : ''}` : ''}`;
     html += `<button type="button" class="${cls}" data-cal="pick" data-d="${iso}" aria-label="${esc(label)}" aria-pressed="${iso === calUi.sel}"><span class="n">${d.getDate()}</span>
-      <span class="dots">${hol.length ? `<i class="h${fed ? ' f' : ''}"></i>` : ''}${ev.length ? '<i class="e"></i>' : ''}${trip ? '<i class="t"></i>' : ''}</span></button>`;
+      <span class="dots">${hol.length ? `<i class="h${fed ? ' f' : ''}"></i>` : ''}${ev.length ? '<i class="e"></i>' : ''}${trip ? '<i class="t"></i>' : ''}${watch ? '<i class="w"></i>' : ''}</span></button>`;
   }
   html += '</div></div>';
   // the picked day
@@ -1850,7 +1882,11 @@ function renderCalendar() {
   html += `<div class="card calday"><div class="calday-h"><div><div class="wdname">${WD[sd.getDay()]}</div><div class="muted">${MONTHS[sd.getMonth()]} ${sd.getDate()}, ${sd.getFullYear()} · ${esc(relDays(calUi.sel))}</div></div>
     <button type="button" class="btn small primary" data-cal="add">+ Event</button></div>
     ${hol.map(h => `<div class="calitem"><span class="tag${h.fed ? ' f' : ''}">${h.fed ? 'Holiday' : 'Observance'}</span>${esc(h.name)}</div>`).join('')}
-    ${ev.map(e => e.src === 'trip'
+    ${ev.map(e => e.src === 'movie'
+      ? `<button type="button" class="calitem ev" data-cal="gorel"><span class="tag w">🎬 ${esc(e.kinds.join(', '))}</span><span>${esc(e.title)}<span class="muted calnote">A movie you’re watching for · Movie releases ›</span></span></button>`
+      : e.src === 'tv'
+      ? `<button type="button" class="calitem ev" data-cal="gotv"><span class="tag w">📺 ${e.time ? esc(fmtClock(e.time)) : 'New'}</span><span>${esc(e.title)}${e.ep ? ` <span class="muted">· ${esc(e.ep)}</span>` : ''}<span class="muted calnote">${esc([e.net, 'A show you follow · TV listings ›'].filter(Boolean).join(' · '))}</span></span></button>`
+      : e.src === 'trip'
       ? `<a class="calitem ev" href="${PLANNER_URL}#/trip/${encodeURIComponent(e.id)}" target="_blank" rel="noopener"><span class="tag t">${e.cruise ? '🚢 Cruise' : '✈️ Trip'}</span><span>${esc(e.title)} <span class="muted">· day ${e.day} of ${e.len}</span><span class="muted calnote">Open in Planner ›</span></span></a>`
       : `<button type="button" class="calitem ev" data-cal="edit" data-src="${e.src}" data-id="${esc(e.id)}"><span class="tag e">${e.time ? esc(fmtClock(e.time)) : 'Event'}</span><span>${esc(e.title)}${e.yearly ? ` <span class="muted">🔁${yrsOf(e, calUi.sel) > 0 ? ` ${yrsOf(e, calUi.sel)} yrs` : ''}</span>` : ''}${e.place ? `<span class="muted calnote">📍 ${esc(e.place)}</span>` : ''}${e.note ? `<span class="muted calnote">${esc(e.note)}</span>` : ''}${e.src === 'local' ? '<span class="muted calnote">On this device only</span>' : ''}</span></button>`).join('')}
     ${!hol.length && !ev.length ? '<p class="muted calnone">Nothing on this day.</p>' : ''}</div>`;
@@ -1859,7 +1895,7 @@ function renderCalendar() {
   for (let i = 0; i <= 60 && up.length < 8; i++) {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i); const iso = isoDate(d);
     for (const h of holidaysOn(iso)) if (h.fed || i <= 21) up.push({ iso, name: h.name, kind: h.fed ? 'f' : 'o' });
-    for (const e of itemsOn(iso)) if (e.src !== 'trip' || e.day === 1) up.push({ iso, name: e.src === 'trip' ? `${e.cruise ? '🚢' : '✈️'} ${e.title}` : e.title, kind: e.src === 'trip' ? 't' : 'e', time: e.time });
+    for (const e of itemsOn(iso)) if (e.src !== 'trip' || e.day === 1) up.push({ iso, name: e.src === 'trip' ? `${e.cruise ? '🚢' : '✈️'} ${e.title}` : e.src === 'movie' ? `🎬 ${e.title} – ${e.kinds.join(', ')}` : e.src === 'tv' ? `📺 ${e.title}${e.ep ? ` · ${e.ep}` : ''}` : e.title, kind: e.src === 'trip' ? 't' : e.src === 'movie' || e.src === 'tv' ? 'w' : 'e', time: e.time });
   }
   if (up.length) html += `<div class="sec-h"><span>Coming up</span></div><div class="card calup">${up.slice(0, 8).map(u => { const d = parseIso(u.iso);
     return `<button type="button" class="calitem" data-cal="goto" data-d="${u.iso}"><span class="when">${esc(d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }))}</span><span class="dot ${u.kind}"></span><span>${esc(u.name)}${u.time ? ` <span class="muted">${esc(fmtClock(u.time))}</span>` : ''}</span></button>`; }).join('')}</div>`;
@@ -1904,6 +1940,8 @@ view.addEventListener('click', ev => {
     case 'today': calGo(todayIso()); render(); break;
     case 'pick': case 'goto': calGo(el.dataset.d); render(); if (el.dataset.cal === 'goto') window.scrollTo(0, 0); break;
     case 'add': eventDialog(null, calUi.sel); break;
+    case 'gorel': state.rel.view = 'watching'; save(); location.hash = '#releases'; break;
+    case 'gotv': tvUi.my = true; location.hash = '#tv'; break;
     case 'edit': {
       if (el.dataset.src === 'planner') { const p = state.planner.find(x => x.id === el.dataset.id); if (p) eventDialog(null, '', p); break; }
       const e = state.cal.events.find(x => x.id === el.dataset.id); if (e) eventDialog(e); break; }
@@ -2053,6 +2091,19 @@ function relEnsureGenres() {
     if (route() === 'releases') renderIfSafe(); return relGenres;
   })().catch(() => { relGenresP = null; return null; }));
 }
+/* saved details for the movies you watch for, read from this device (no network): the Calendar and the
+   "out this week" note on the Movie releases button use them */
+async function relWarm() {
+  let changed = false;
+  for (const f of state.rel.follow) if (!relInfo[f.id]) { const c = await relCacheGet('m:' + f.id); if (c) { relInfo[f.id] = c; changed = true; } }
+  return changed;
+}
+/* movies you watch for that come out this week (Sunday–Saturday) */
+function relOutThisWeek() {
+  const a = weekStart(todayIso()), d = parseIso(a); d.setDate(d.getDate() + 6); const b = isoDate(d);
+  return state.rel.follow.map(f => ({ f, i: relInfo[f.id] })).filter(({ i }) => i && [i.digital, i.disc].some(x => x && x >= a && x <= b))
+    .map(({ f, i }) => ({ id: f.id, title: f.title, when: relWhen(i.digital >= a && i.digital <= b ? i.digital : '', i.disc >= a && i.disc <= b ? i.disc : '') }));
+}
 /* ---- screen ---- */
 const relFmt = iso => parseIso(iso).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: iso.slice(0, 4) === todayIso().slice(0, 4) ? undefined : 'numeric' });   /* the year only when it isn't this year */
 const relWatching = id => state.rel.follow.some(f => f.id === id);
@@ -2102,6 +2153,7 @@ function renderReleases() {
   const span = `${parseIso(from).toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${parseIso(to).toLocaleDateString([], { month: parseIso(from).getMonth() === parseIso(to).getMonth() ? undefined : 'short', day: 'numeric' })}`;
   html += `<div class="relweek"><button type="button" class="btn small ghost" data-rel="wk" data-d="-1" aria-label="Previous week">‹</button><div><h2>${esc(label)}</h2><div class="muted">${esc(span)}${n ? ' · <button type="button" class="linkbtn" data-rel="wk" data-d="0">This week</button>' : ''}</div></div><button type="button" class="btn small ghost" data-rel="wk" data-d="1" aria-label="Next week">›</button></div>`;
   if (!hit || Date.now() - hit.at > REL_FRESH) relLoad();
+  if (n === 0) { const out = relOutThisWeek(); if (out.length) html += `<div class="card relout"><b>★ Out this week from your Watching list</b>${out.map(o => `<div>${esc(o.title)} <span class="muted">· ${esc(o.when.join(' · '))}</span></div>`).join('')}</div>`; }
   if (!hit) { view.innerHTML = html + (relUi.err ? `<div class="empty"><h2>No list</h2><p>${esc(relUi.err)}</p><div class="foot"><button type="button" class="btn primary" data-rel="refresh">Try again</button></div></div>` : '<div class="empty"><p class="muted">Getting release dates from TMDB…</p></div>'); return; }
   const all = hit.items.slice().sort((a, b) => a.date.localeCompare(b.date) || b.pop - a.pop);
   const shown = all;   /* everything, most popular first within each day */
@@ -2161,7 +2213,7 @@ function relToggleWatch(m) {
   const i = state.rel.follow.findIndex(f => f.id === m.id);
   if (i >= 0) { state.rel.follow.splice(i, 1); toast(`Stopped watching for ${m.title}`); }
   else { state.rel.follow.push({ id: m.id, title: m.title, poster: m.poster || '' }); toast(`Watching for ${m.title}`); relDetails(m.id).then(() => { if (route() === 'releases') renderIfSafe(); }); }
-  save(); render();
+  commit();   /* shared with your other devices */
 }
 const relItem = id => { for (const t in relMem) { const m = relMem[t].items.find(x => x.id === id); if (m) return m; } return (relUi.found || []).find(x => x.id === id) || state.rel.follow.find(x => x.id === id) || null; };
 
@@ -2338,6 +2390,7 @@ document.addEventListener('keydown', e => {
   catch (e) { console.error(e); toast('This browser isn’t allowing storage, so links won’t be kept.'); }
   Sync.onChange(() => { renderIfSafe(); setTimeout(moveLocalToPlanner, 0); });
   ensureBuiltins(); applyTheme(); render();
+  relWarm().then(c => { if (c) renderIfSafe(); });
   Sync.start({ db, key: 'sync', model: syncModel }).catch(e => console.error(e));
 })();
 </script>
