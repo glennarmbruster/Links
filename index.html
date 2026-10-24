@@ -246,7 +246,7 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .calgrid .day.today .n{background:var(--accent);color:var(--accent-ink);font-weight:800}
 .calgrid .day.sel{background:var(--accent-soft)}
 .calgrid .dots{position:absolute;bottom:3px;display:flex;gap:3px;height:5px}
-.calgrid .dots i{width:5px;height:5px;border-radius:50%;background:var(--muted)}.calgrid .dots i.f{background:#e5484d}.calgrid .dots i.e{background:var(--accent)}
+.calgrid .dots i{width:5px;height:5px;border-radius:50%;background:var(--muted)}.calgrid .dots i.f{background:#e5484d}.calgrid .dots i.e{background:var(--accent)}.calgrid .dots i.t{background:#16a34a}
 .calday{margin-top:12px;padding:14px}
 .calday-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
 .wdname{font-size:26px;font-weight:800;line-height:1.1}
@@ -254,12 +254,13 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .calday .calitem:first-of-type{border-top:0}
 button.calitem{cursor:pointer}
 .calitem .tag{flex:none;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:var(--soft);color:var(--muted)}
-.calitem .tag.f{background:#fde8e6;color:#b42318}.calitem .tag.e{background:var(--accent-soft);color:var(--accent);text-transform:none}
+.calitem .tag.f{background:#fde8e6;color:#b42318}.calitem .tag.t{background:#dcf5e3;color:#166534;text-transform:none}
+a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);color:var(--accent);text-transform:none}
 .calnote{display:block;font-size:13px}
 .calnone{margin:4px 0 0}
 .calup{padding:0 14px}.calup .calitem:first-child{border-top:0}
 .calup .when{flex:none;width:96px;font-size:14px;font-weight:700;color:var(--muted)}
-.calup .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted);align-self:center}.calup .dot.f{background:#e5484d}.calup .dot.e{background:var(--accent)}
+.calup .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted);align-self:center}.calup .dot.f{background:#e5484d}.calup .dot.e{background:var(--accent)}.calup .dot.t{background:#16a34a}
 .calopts{margin-top:14px}.chk{display:inline-flex;gap:8px;align-items:center;font-size:15px}
 /* TV */
 .tvbar{padding-bottom:6px}
@@ -870,7 +871,7 @@ const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a'
 const EMOJIS = ['🎬', '📺', '⬇️', '🗄️', '💻', '🖥️', '🇺🇸', '🩺', '💬', '🗳️', '📰', '🏈', '⚽', '🛒', '🏦', '✈️', '🍳', '🎵', '📷', '🏠', '🔧', '📈', '⭐', '🔗'];
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, groups: [], links: [], lastGroup: '' });
+const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], groups: [], links: [], lastGroup: '' });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
 /* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
 const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
@@ -911,6 +912,8 @@ function normFollow(tv) {
   return list.filter(f => f && Number.isInteger(f.id) && f.id > 0 && !seen.has(f.id) && seen.add(f.id)).slice(0, 300)
     .map(f => ({ id: f.id, name: str(f.name).slice(0, 120) || 'Show', net: str(f.net).slice(0, 60) }));
 }
+/* this device's copy of Planner's shared trips/events records ({ id, data }), filled by sync when signed in */
+const normPlanner = a => (Array.isArray(a) ? a : []).filter(p => p && typeof p.id === 'string' && p.id && p.data && typeof p.data === 'object').slice(0, 3000).map(p => ({ id: p.id.slice(0, 80), data: p.data }));
 function normState(s) {
   s = s && typeof s === 'object' ? s : {};
   const seen = new Set(), groups = (Array.isArray(s.groups) ? s.groups : []).map(normGroup).filter(g => g && !seen.has(g.id) && seen.add(g.id)).slice(0, MAX_GROUPS);
@@ -918,7 +921,7 @@ function normState(s) {
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
   const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : /^cols/.test(str(s.view)) ? 'all' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
-    builtins: (Array.isArray(s.builtins) ? s.builtins : []).filter(k => APPS[k]), cal: normCal(s.cal), tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all',
+    builtins: (Array.isArray(s.builtins) ? s.builtins : []).filter(k => APPS[k]), cal: normCal(s.cal), planner: normPlanner(s.planner), tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all',
       by: s.tv && s.tv.by === 'net' ? 'net' : 'time', nets: s.tv && Array.isArray(s.tv.nets) ? [...new Set(s.tv.nets.filter(n => typeof n === 'string').map(n => clampStr(n, 40)).filter(Boolean))].slice(0, 60) : ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] } };
   resort(out); fillAllOrder(out); return out;
 }
@@ -1008,15 +1011,17 @@ function commit() { save(); committing = true; try { Sync.touch(); } finally { c
 
 /* ---- sync: the same links on every device you sign in on (Firebase, the same account setup as Grocery and To-do).
    What syncs: links, groups and their order. What stays on each device: Recent, the list/icon view, cached site icons. ---- */
-const C_GROUPS = 'linkGroups', C_LINKS = 'links';
+const C_GROUPS = 'linkGroups', C_LINKS = 'links', C_TRIPS = 'trips';   /* trips: Planner's trips and events, for the Calendar */
 const syncModel = {
-  colls: [C_GROUPS, C_LINKS],
+  colls: [C_GROUPS, C_LINKS, C_TRIPS],
   toEntities() {
     return [...state.groups.map(g => ({ coll: C_GROUPS, id: g.id, data: { name: g.name, o: g.o } })),
-      ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, note: l.note, added: l.added, o: l.o, a: l.a } }))];
+      ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, note: l.note, added: l.added, o: l.o, a: l.a } })),
+      ...state.planner.map(p => ({ coll: C_TRIPS, id: p.id, data: p.data }))];   /* handed back exactly as Planner wrote them */
   },
   apply(out) {
-    const before = JSON.stringify([state.groups, state.links]);
+    const before = JSON.stringify([state.groups, state.links, state.planner]);
+    state.planner = (out[C_TRIPS] || []).map(r => ({ id: r.id, data: JSON.parse(JSON.stringify(r.data)) }));
     const groups = [], gids = new Set();
     for (const r of out[C_GROUPS] || []) { const g = normGroup({ ...r.data, id: r.id }); if (g && !gids.has(g.id)) { if (g.o == null) g.o = groups.length; gids.add(g.id); groups.push(g); } }
     const old = new Map(state.links.map(l => [l.id, l])), links = [], seenId = new Set();
@@ -1030,7 +1035,7 @@ const syncModel = {
     /* the same address added on two devices before they were signed in: keep the first one */
     links.sort(byOrd); const urls = new Set();
     state.groups = groups; state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort(); fillAllOrder();
-    if (JSON.stringify([state.groups, state.links]) === before) return;
+    if (JSON.stringify([state.groups, state.links, state.planner]) === before) return;
     save(); renderIfSafe();
   }
 };
@@ -1276,7 +1281,7 @@ async function importSafari() {
   if (await confirmBox(`Add ${items.length} bookmarks?`, 'Folders become groups. Ones you already have are skipped.', 'Add them', false)) addMany(items);
 }
 async function doBackup() {
-  const text = await Backup.build({ appId: APP_ID, schema: SCHEMA, data: state });
+  const text = await Backup.build({ appId: APP_ID, schema: SCHEMA, data: { ...state, planner: [] } });   /* Planner's records are Planner's to back up */
   const r = await deliverFile(`links-backup-${todayISO()}.json`, text); if (r === 'downloaded') toast('Backup saved');
 }
 async function doRestore() {
@@ -1285,7 +1290,7 @@ async function doRestore() {
     const r = await Backup.parse(await readFileText(f), { appId: APP_ID, schema: SCHEMA }); if (!r) return;
     const s = normState(r.data);
     if (!(await confirmBox('Replace your links?', `The backup has ${s.links.length} links. Your current ${state.links.length} will be replaced.`, 'Replace'))) return;
-    state = s; commit(); toast('Links restored');
+    state = { ...s, planner: state.planner }; commit(); toast('Links restored');   /* never put back an old copy of Planner's records: it would undo changes made in Planner */
   } catch (e) { msgBox('Couldn’t restore', e.message); }
 }
 
@@ -1656,7 +1661,9 @@ window.addEventListener('online', () => { if (route() === 'tv') { tvUi.errDay = 
 document.addEventListener('visibilitychange', () => { if (!document.hidden && route() === 'tv') renderIfSafe(); });
 
 /* ===================== Calendar: see what day any date falls on; US holidays; your own events ===================== */
-/* Everything is worked out on the device (no service). Your events stay on this device and go into this app's backup. */
+/* Holidays are worked out on the device. Events live in Planner (same Firebase sign-in): the Calendar shows Planner's
+   trips and events, and an event added here is a Planner event, shared like any other. Signed out, events stay on this device
+   until you sign in, then they move to Planner. */
 const pad2 = n => String(n).padStart(2, '0');
 const isoOf = (y, m, d) => `${y}-${pad2(m + 1)}-${pad2(d)}`;          // m is 0-11
 const isoDate = d => isoOf(d.getFullYear(), d.getMonth(), d.getDate());
@@ -1721,6 +1728,37 @@ function eventsOn(iso) {
   return state.cal.events.filter(e => e.date === iso || (e.yearly && e.date <= iso && (e.date.slice(5) === md || (!leap && e.date.slice(5) === '02-29' && md === '02-28'))))
     .sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.title.localeCompare(b.title));
 }
+/* ---- Planner's trips and events (a copy of Planner's shared records, kept up to date by sync) ---- */
+const PLANNER_URL = '../Goobs-Apps/travel/';
+const planList = () => state.planner.map(p => ({ id: p.id, ...p.data })).filter(t => t.name && parseIso(t.startDate));
+const sharesPlanner = () => !!(Sync.user() && Sync.enabled() && Sync.status() !== 'denied');
+const nextYear = (iso, md) => { const y = +iso.slice(0, 4), leap = new Date(y, 1, 29).getMonth() === 1; return md === iso.slice(5) || (!leap && md === '02-29' && iso.slice(5) === '02-28'); };
+/* everything on one day: your events (Planner or this device) and Planner trips */
+function itemsOn(iso) {
+  const out = [];
+  for (const t of planList()) {
+    if (t.kind === 'event') { if (t.startDate === iso || (t.yearly && t.startDate <= iso && nextYear(iso, t.startDate.slice(5)))) out.push({ src: 'planner', id: t.id, title: t.name, time: t.time || '', yearly: !!t.yearly, start: t.startDate, place: t.destination || '' }); }
+    else if (t.startDate <= iso && iso <= (t.endDate || t.startDate)) {
+      const day = Math.round((parseIso(iso) - parseIso(t.startDate)) / 864e5) + 1, len = Math.round((parseIso(t.endDate || t.startDate) - parseIso(t.startDate)) / 864e5) + 1;
+      out.push({ src: 'trip', id: t.id, title: t.name, day, len, cruise: !!t.cruise, place: t.destination || '' });
+    }
+  }
+  for (const e of eventsOn(iso)) out.push({ src: 'local', id: e.id, title: e.title, time: e.time, yearly: e.yearly, start: e.date, note: e.note });
+  return out.sort((a, b) => (a.src === 'trip' ? -1 : 0) - (b.src === 'trip' ? -1 : 0) || (a.time || '99').localeCompare(b.time || '99') || a.title.localeCompare(b.title));
+}
+const yrsOf = (x, iso) => (x.yearly ? +iso.slice(0, 4) - +x.start.slice(0, 4) : 0);
+/* a Planner event record, the same shape Planner itself writes */
+function plannerEvent(rec, old) {
+  const base = old || { kind: 'event', yearly: false, time: '', name: '', destination: '', startDate: '', endDate: '', travelers: 1, currency: 'USD', budgetTotal: null, notes: '', location: null, cruise: null, travelerNames: [], packLists: ['Main'], splitFam: false, createdAt: Date.now() };
+  return { ...base, kind: 'event', yearly: !!rec.yearly, time: rec.time || '', name: rec.title.slice(0, 100), destination: (rec.place || '').slice(0, 120), startDate: rec.date, endDate: rec.date };
+}
+/* events made while signed out move into Planner once you're signed in */
+function moveLocalToPlanner() {
+  if (!state.cal.events.length || !sharesPlanner() || Sync.status() !== 'live') return;
+  const n = state.cal.events.length;
+  for (const e of state.cal.events) state.planner.push({ id: uid(), data: plannerEvent({ title: e.title, date: e.date, time: e.time, yearly: e.yearly, place: '' }) });
+  state.cal.events = []; commit(); toast(`Moved ${n} event${n > 1 ? 's' : ''} into Planner`);
+}
 const fmtClock = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return new Date(2000, 0, 1, h, m).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
 const yearsSince = (e, iso) => (e.yearly ? +iso.slice(0, 4) - +e.date.slice(0, 4) : 0);
 
@@ -1745,50 +1783,61 @@ function renderCalendar() {
   const cells = Math.ceil((first + days) / 7) * 7;
   for (let i = 0; i < cells; i++) {
     const d = new Date(y, m, 1 - first + i), iso = isoDate(d), out = d.getMonth() !== m;
-    const hol = holidaysOn(iso), ev = eventsOn(iso), fed = hol.some(h => h.fed);
+    const hol = holidaysOn(iso), its = itemsOn(iso), ev = its.filter(x => x.src !== 'trip'), trip = its.some(x => x.src === 'trip'), fed = hol.some(h => h.fed);
     const cls = ['day', out ? 'out' : '', iso === today ? 'today' : '', iso === calUi.sel ? 'sel' : '', fed ? 'fed' : '', d.getDay() === 0 || d.getDay() === 6 ? 'we' : ''].filter(Boolean).join(' ');
     const label = `${WD[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}${hol.length ? ', ' + hol.map(h => h.name).join(', ') : ''}${ev.length ? `, ${ev.length} event${ev.length > 1 ? 's' : ''}` : ''}`;
     html += `<button type="button" class="${cls}" data-cal="pick" data-d="${iso}" aria-label="${esc(label)}" aria-pressed="${iso === calUi.sel}"><span class="n">${d.getDate()}</span>
-      <span class="dots">${hol.length ? `<i class="h${fed ? ' f' : ''}"></i>` : ''}${ev.length ? '<i class="e"></i>' : ''}</span></button>`;
+      <span class="dots">${hol.length ? `<i class="h${fed ? ' f' : ''}"></i>` : ''}${ev.length ? '<i class="e"></i>' : ''}${trip ? '<i class="t"></i>' : ''}</span></button>`;
   }
   html += '</div></div>';
   // the picked day
-  const sd = parseIso(calUi.sel), hol = holidaysOn(calUi.sel), ev = eventsOn(calUi.sel);
+  const sd = parseIso(calUi.sel), hol = holidaysOn(calUi.sel), ev = itemsOn(calUi.sel);
   html += `<div class="card calday"><div class="calday-h"><div><div class="wdname">${WD[sd.getDay()]}</div><div class="muted">${MONTHS[sd.getMonth()]} ${sd.getDate()}, ${sd.getFullYear()} · ${esc(relDays(calUi.sel))}</div></div>
     <button type="button" class="btn small primary" data-cal="add">+ Event</button></div>
     ${hol.map(h => `<div class="calitem"><span class="tag${h.fed ? ' f' : ''}">${h.fed ? 'Holiday' : 'Observance'}</span>${esc(h.name)}</div>`).join('')}
-    ${ev.map(e => `<button type="button" class="calitem ev" data-cal="edit" data-id="${esc(e.id)}"><span class="tag e">${e.time ? esc(fmtClock(e.time)) : 'Event'}</span><span>${esc(e.title)}${yearsSince(e, calUi.sel) > 0 ? ` <span class="muted">(${yearsSince(e, calUi.sel)} yrs)</span>` : ''}${e.note ? `<span class="muted calnote">${esc(e.note)}</span>` : ''}</span></button>`).join('')}
+    ${ev.map(e => e.src === 'trip'
+      ? `<a class="calitem ev" href="${PLANNER_URL}#/trip/${encodeURIComponent(e.id)}" target="_blank" rel="noopener"><span class="tag t">${e.cruise ? '🚢 Cruise' : '✈️ Trip'}</span><span>${esc(e.title)} <span class="muted">· day ${e.day} of ${e.len}</span><span class="muted calnote">Open in Planner ›</span></span></a>`
+      : `<button type="button" class="calitem ev" data-cal="edit" data-src="${e.src}" data-id="${esc(e.id)}"><span class="tag e">${e.time ? esc(fmtClock(e.time)) : 'Event'}</span><span>${esc(e.title)}${e.yearly ? ` <span class="muted">🔁${yrsOf(e, calUi.sel) > 0 ? ` ${yrsOf(e, calUi.sel)} yrs` : ''}</span>` : ''}${e.place ? `<span class="muted calnote">📍 ${esc(e.place)}</span>` : ''}${e.note ? `<span class="muted calnote">${esc(e.note)}</span>` : ''}${e.src === 'local' ? '<span class="muted calnote">On this device only</span>' : ''}</span></button>`).join('')}
     ${!hol.length && !ev.length ? '<p class="muted calnone">Nothing on this day.</p>' : ''}</div>`;
   // coming up: the next 60 days
   const up = [];
   for (let i = 0; i <= 60 && up.length < 8; i++) {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i); const iso = isoDate(d);
     for (const h of holidaysOn(iso)) if (h.fed || i <= 21) up.push({ iso, name: h.name, kind: h.fed ? 'f' : 'o' });
-    for (const e of eventsOn(iso)) up.push({ iso, name: e.title, kind: 'e', time: e.time });
+    for (const e of itemsOn(iso)) if (e.src !== 'trip' || e.day === 1) up.push({ iso, name: e.src === 'trip' ? `${e.cruise ? '🚢' : '✈️'} ${e.title}` : e.title, kind: e.src === 'trip' ? 't' : 'e', time: e.time });
   }
   if (up.length) html += `<div class="sec-h"><span>Coming up</span></div><div class="card calup">${up.slice(0, 8).map(u => { const d = parseIso(u.iso);
     return `<button type="button" class="calitem" data-cal="goto" data-d="${u.iso}"><span class="when">${esc(d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }))}</span><span class="dot ${u.kind}"></span><span>${esc(u.name)}${u.time ? ` <span class="muted">${esc(fmtClock(u.time))}</span>` : ''}</span></button>`; }).join('')}</div>`;
   html += `<div class="foot calopts"><label class="chk"><input type="checkbox" data-cal="hol"${state.cal.holidays ? ' checked' : ''}> Show US holidays</label></div>
-    <p class="hint c">Federal holidays in red. Your events stay on this device and are in this app’s backup.</p>`;
+    <p class="hint c">Federal holidays in red. ${sharesPlanner() ? 'Events and trips come from Planner; events you add here go into Planner, shared like any Planner event.' : 'Sign in (on the Links screen) to see Planner’s trips and events here. Until then, events you add stay on this device.'}</p>`;
   view.innerHTML = html;
 }
-function eventDialog(e, date) {
-  const isNew = !e;
+/* e: a local event; p: a Planner record { id, data }; neither: new (goes to Planner when signed in) */
+function eventDialog(e, date, p) {
+  const toPlanner = p ? true : e ? false : sharesPlanner(), d = p && p.data;
   formDialog({
-    title: isNew ? 'New event' : 'Edit event',
+    title: e || p ? 'Edit event' : 'New event',
+    intro: toPlanner ? 'Saved in Planner and shared like any Planner event, so keep the title general.' : 'Not signed in: this stays on this device until you sign in, then it moves to Planner.',
     fields: [
-      { name: 'title', label: 'What', required: true, value: e ? e.title : '', placeholder: 'e.g. Dentist, Mom’s birthday' },
-      { name: 'date', label: 'Date', type: 'date', required: true, value: e ? e.date : date },
-      { name: 'time', label: 'Time (optional)', type: 'time', value: e ? e.time : '' },
-      { name: 'yearly', label: 'Every year (birthdays, anniversaries)', type: 'checkbox', value: e ? e.yearly : false },
-      { name: 'note', label: 'Note (optional)', value: e ? e.note : '' }
+      { name: 'title', label: 'What', required: true, value: d ? d.name : e ? e.title : '', placeholder: 'e.g. Dentist, Mom’s birthday' },
+      { name: 'date', label: 'Date', type: 'date', required: true, value: d ? d.startDate : e ? e.date : date },
+      { name: 'time', label: 'Time (optional)', type: 'time', value: d ? d.time : e ? e.time : '' },
+      ...(toPlanner ? [{ name: 'place', label: 'Place (optional)', value: d ? d.destination : '' }] : []),
+      { name: 'yearly', label: 'Every year (birthdays, anniversaries)', type: 'checkbox', value: d ? !!d.yearly : e ? e.yearly : false },
+      ...(toPlanner ? [] : [{ name: 'note', label: 'Note (optional)', value: e ? e.note : '' }])
     ],
-    onDelete: e ? async () => { state.cal.events = state.cal.events.filter(x => x !== e); save(); render(); toast(`Deleted ${e.title}`, { label: 'Undo', fn: () => { state.cal.events.push(e); save(); render(); } }); return true; } : null,
+    onDelete: p ? async () => {
+      if (!(await confirmBox(`Delete “${d.name}”?`, 'It’s a Planner event, so it’s removed from Planner everywhere it’s shared.', 'Delete event'))) return false;
+      state.planner = state.planner.filter(x => x !== p); commit(); toast(`Deleted ${d.name}`, { label: 'Undo', fn: () => { if (!state.planner.some(x => x.id === p.id)) state.planner.push(p); commit(); } }); return true;
+    } : e ? async () => { state.cal.events = state.cal.events.filter(x => x !== e); save(); render(); toast(`Deleted ${e.title}`, { label: 'Undo', fn: () => { state.cal.events.push(e); save(); render(); } }); return true; } : null,
     onSubmit: v => {
       if (!parseIso(v.date)) return 'Pick a date.';
-      const rec = { title: clampStr(v.title, 80), date: v.date, time: /^\d{2}:\d{2}$/.test(v.time) ? v.time : '', yearly: !!v.yearly, note: clampStr(v.note, 300) };
-      if (e) Object.assign(e, rec); else state.cal.events.push({ id: uid(), ...rec });
-      calGo(rec.date); save(); render();
+      const rec = { title: clampStr(v.title, 100), date: v.date, time: /^\d{2}:\d{2}$/.test(v.time) ? v.time : '', yearly: !!v.yearly, place: clampStr(v.place, 120), note: clampStr(v.note, 300) };
+      if (p) p.data = plannerEvent(rec, p.data);
+      else if (toPlanner) state.planner.push({ id: uid(), data: plannerEvent(rec) });
+      else if (e) Object.assign(e, { title: rec.title, date: rec.date, time: rec.time, yearly: rec.yearly, note: rec.note });
+      else state.cal.events.push({ id: uid(), title: rec.title, date: rec.date, time: rec.time, yearly: rec.yearly, note: rec.note });
+      calGo(rec.date); if (toPlanner) commit(); else { save(); render(); }
     }
   });
 }
@@ -1800,7 +1849,9 @@ view.addEventListener('click', ev => {
     case 'today': calGo(todayIso()); render(); break;
     case 'pick': case 'goto': calGo(el.dataset.d); render(); if (el.dataset.cal === 'goto') window.scrollTo(0, 0); break;
     case 'add': eventDialog(null, calUi.sel); break;
-    case 'edit': { const e = state.cal.events.find(x => x.id === el.dataset.id); if (e) eventDialog(e); break; }
+    case 'edit': {
+      if (el.dataset.src === 'planner') { const p = state.planner.find(x => x.id === el.dataset.id); if (p) eventDialog(null, '', p); break; }
+      const e = state.cal.events.find(x => x.id === el.dataset.id); if (e) eventDialog(e); break; }
   }
 });
 view.addEventListener('change', ev => {
@@ -1820,7 +1871,7 @@ view.addEventListener('touchend', ev => {
 (async function init() {
   try { db = await openDB(DB_NAME); const raw = await idbGet(db, 'state'); if (raw) state = normState(JSON.parse(raw)); }
   catch (e) { console.error(e); toast('This browser isn’t allowing storage, so links won’t be kept.'); }
-  Sync.onChange(() => renderIfSafe());
+  Sync.onChange(() => { renderIfSafe(); setTimeout(moveLocalToPlanner, 0); });
   ensureBuiltins(); applyTheme(); render();
   Sync.start({ db, key: 'sync', model: syncModel }).catch(e => console.error(e));
 })();
