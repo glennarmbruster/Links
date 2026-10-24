@@ -221,6 +221,14 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .emo-pick{display:flex;flex-wrap:wrap;gap:6px}
 .emo-pick button{font-size:22px;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer}
 .emo-pick button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.emo-pick button.drawn{padding:4px}.emo-pick button.drawn svg{width:100%;height:100%;display:block}
+.ico.drawn{background:none}.ico.drawn svg{width:100%;height:100%;display:block}
+/* VA pay */
+.vatable{padding:4px 14px;margin-top:12px}.vatable table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.vatable th,.vatable td{padding:10px 4px;border-top:1px solid var(--line);text-align:right;font-size:16px}
+.vatable thead th{border-top:0;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.vatable th:first-child{text-align:left}.vatable tbody th{font-weight:800}
+.vaup{display:block;font-size:12px;color:var(--ok);font-weight:600}
 [hidden]{display:none!important}
 /* built-in Calendar tile: weekday and today's date */
 .ico.calico{background:#fff;color:#1b2420;flex-direction:column;display:flex;align-items:center;justify-content:center;gap:0;line-height:1;border:1px solid var(--line)}
@@ -878,6 +886,13 @@ const VIEWS = [['list', 'List with addresses', '☰'], ['icons', 'Big icons by g
 const APP_ID = 'goobs-links', DB_NAME = 'goobs-links-db', SCHEMA = 1;
 const MAX_LINKS = 2000, MAX_GROUPS = 100, RECENT_N = 4;
 const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a', '#ca8a04', '#0891b2', '#7c3aed', '#db2777', '#4d7c0f', '#b45309'];
+/* drawn icons you can pick for any link (stored in the icon field as §name) */
+const DRAWN = {
+  calc: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f766e"/><rect x="15" y="8" width="34" height="48" rx="6" fill="#f8fafc"/><rect x="19" y="12" width="26" height="11" rx="2.5" fill="#134e4a"/><rect x="31" y="15.5" width="11" height="4" rx="1" fill="#5eead4"/>'
+    + [27, 34, 41, 48].flatMap((y, r) => [20, 29, 38].map((x, c) => (c === 2 && r >= 2 ? '' : `<rect x="${x}" y="${y}" width="6" height="5" rx="1.5" fill="${c === 2 ? '#f59e0b' : '#94a3b8'}"/>`))).join('')
+    + '<rect x="38" y="41" width="6" height="12" rx="1.5" fill="#f59e0b"/></svg>'
+};
+const drawnOf = e => (/^§(\w+)$/.test(str(e)) && DRAWN[e.slice(1)] ? e.slice(1) : '');
 const EMOJIS = ['🎬', '📺', '⬇️', '🗄️', '💻', '🖥️', '🇺🇸', '🩺', '💬', '🗳️', '📰', '🏈', '⚽', '🛒', '🏦', '✈️', '🍳', '🎵', '📷', '🏠', '🔧', '📈', '⭐', '🔗'];
 
 /* ---- model ---- */
@@ -886,8 +901,9 @@ const clampStr = (v, n) => str(v).trim().slice(0, n);
 /* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
 const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
   calendar: { name: 'Calendar', emoji: '', sub: () => `Today is ${new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}` },
-  releases: { name: 'Movie releases', emoji: '📀', sub: () => 'Disc and digital release dates' } };
-const appOf = url => { const m = /^app:(tv|calendar|releases)$/.exec(str(url)); return m ? m[1] : ''; };
+  releases: { name: 'Movie releases', emoji: '📀', sub: () => 'Disc and digital release dates' },
+  vapay: { name: 'VA Disability Pay', emoji: '🎖️', sub: () => `${VA_YEARS[0]} monthly rates, single and married` } };
+const appOf = url => { const m = /^app:(tv|calendar|releases|vapay)$/.exec(str(url)); return m ? m[1] : ''; };
 const linkUrl = u => { if (appOf(u)) return u; const s = safeUrl(u); return s && s.length <= 2000 ? s : ''; };
 const route = () => { const h = location.hash.slice(1); return APPS[h] ? h : ''; };
 const ordOf = v => (isNum(v) ? v : null);
@@ -993,6 +1009,7 @@ function iconCandidates(l) {
 function tileHTML(l) {
   if (appOf(l.url) === 'calendar' && !l.emoji) { const d = new Date(); return `<span class="ico calico" aria-hidden="true"><b>${esc(d.toLocaleDateString([], { weekday: 'short' }).toUpperCase())}</b><span>${d.getDate()}</span></span>`; }
   if (appOf(l.url) && !l.emoji) return `<span class="ico emo" aria-hidden="true">${APPS[appOf(l.url)].emoji}</span>`;
+  if (drawnOf(l.emoji)) return `<span class="ico drawn" aria-hidden="true">${DRAWN[drawnOf(l.emoji)]}</span>`;
   if (l.emoji) return `<span class="ico emo" aria-hidden="true">${esc(l.emoji)}</span>`;
   const c = iconCandidates(l), ini = initials(l.name), letter = `style="background:${colorOf(l.name)}"`;
   if (!c.length) return `<span class="ico${ini.length > 2 ? ' l3' : ''}" ${letter} aria-hidden="true">${esc(ini)}</span>`;
@@ -1093,8 +1110,8 @@ function render() {
     const l = state.links.find(x => appOf(x.url) === app);
     $('#title').textContent = l ? l.name : APPS[app].name;
     $('#viewBtn').textContent = '🎨'; $('#viewBtn').setAttribute('aria-label', 'Theme');
-    $('#sub').textContent = app === 'tv' ? 'New and live episodes' : app === 'releases' ? 'US disc and digital dates' : '';
-    if (app === 'tv') renderTV(); else if (app === 'releases') renderReleases(); else renderCalendar();
+    $('#sub').textContent = app === 'tv' ? 'New and live episodes' : app === 'releases' ? 'US disc and digital dates' : app === 'vapay' ? `${vaUi.year} monthly compensation` : '';
+    if (app === 'tv') renderTV(); else if (app === 'releases') renderReleases(); else if (app === 'vapay') renderVaPay(); else renderCalendar();
     return;
   }
   $('#title').textContent = 'Links';
@@ -1148,7 +1165,7 @@ function render() {
 function toolsHTML(groups) {
   const missing = Object.keys(APPS).filter(k => !state.links.some(l => appOf(l.url) === k));
   return `${groups ? '<div class="foot"><button type="button" class="btn" data-act="gnew">New group</button></div>' : ''}
-    ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${{ tv: '📺', calendar: '📅', releases: '📀' }[k]} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
+    ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${{ tv: '📺', calendar: '📅', releases: '📀', vapay: '🎖️' }[k]} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
     <div class="sec-h"><span>Bring in and back up</span></div>
     <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
     <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links stay the same everywhere. Recent and the view you pick stay per device.')}
@@ -1197,7 +1214,7 @@ function linkDialog(l) {
   if (!open) { extras.forEach(x => { x.hidden = true; }); fieldOf('note').insertAdjacentHTML('afterend', '<button type="button" class="btn small ghost more-btn" id="moreBtn">More options: icon, note</button>'); $('#moreBtn').onclick = () => { extras.forEach(x => { x.hidden = false; }); $('#moreBtn').remove(); }; }
   $$('#dlg .emo-pick').forEach(x => x.remove());
   const emoEl = f.elements.emoji;
-  emoEl.insertAdjacentHTML('afterend', `<div class="emo-pick" role="group" aria-label="Pick an icon">${EMOJIS.map(e => `<button type="button" data-e="${e}" aria-pressed="${emoEl.value === e}">${e}</button>`).join('')}</div>`);
+  emoEl.insertAdjacentHTML('afterend', `<div class="emo-pick" role="group" aria-label="Pick an icon">${Object.keys(DRAWN).map(k => `<button type="button" class="drawn" data-e="§${k}" aria-label="${k === 'calc' ? 'Calculator' : k}" aria-pressed="${emoEl.value === '§' + k}">${DRAWN[k]}</button>`).join('')}${EMOJIS.map(e => `<button type="button" data-e="${e}" aria-pressed="${emoEl.value === e}">${e}</button>`).join('')}</div>`);
   $$('#dlg .emo-pick button').forEach(b => { b.onclick = () => { emoEl.value = emoEl.value === b.dataset.e ? '' : b.dataset.e; $$('#dlg .emo-pick button').forEach(x => x.setAttribute('aria-pressed', x.dataset.e === emoEl.value)); }; });
 }
 async function pasteInto() {
@@ -2088,6 +2105,36 @@ view.addEventListener('submit', async e => {
     const q = relUi.find;
     for (const m of relUi.found || []) { if (relUi.find !== q || !relUi.found) break; await relDetails(m.id); if (route() === 'releases') renderIfSafe(); }
   }
+});
+
+/* ===================== VA disability pay: monthly rates, veteran alone (single) and with spouse (married, no children or parents) ===================== */
+/* To update each year: add the new year to VA_RATES (newest first) and set its note. Source: va.gov/disability/compensation-rates/veteran-rates/ */
+const VA_RATES = {
+  2027: { note: 'Estimated: VA’s Dec 1, 2025 rates plus the 3.6% cost-of-living increase Social Security announced Oct 2026. VA posts its official table around Dec 1, 2026; the increase also needs Congress’s yearly COLA bill. Paid starting with the January 2027 payment.',
+    rows: { 10: [186.92, 186.92], 20: [369.50, 369.50], 30: [572.36, 639.70], 40: [824.49, 914.62], 50: [1173.68, 1286.61], 60: [1486.68, 1622.40], 70: [1873.55, 2032.06], 80: [2177.83, 2359.13], 90: [2447.34, 2651.43], 100: [4080.37, 4307.86] } },
+  2026: { note: 'Official VA rates effective Dec 1, 2025 (paid from January 2026).',
+    rows: { 10: [180.42, 180.42], 20: [356.66, 356.66], 30: [552.47, 617.47], 40: [795.84, 882.84], 50: [1132.90, 1241.90], 60: [1435.02, 1566.02], 70: [1808.45, 1961.45], 80: [2102.15, 2277.15], 90: [2362.30, 2559.30], 100: [3938.58, 4158.17] } }
+};
+const VA_YEARS = Object.keys(VA_RATES).map(Number).sort((a, b) => b - a);
+const vaUi = { year: VA_YEARS[0], yearly: false };
+const usd = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function renderVaPay() {
+  const y = VA_RATES[vaUi.year], prev = VA_RATES[vaUi.year - 1], k = vaUi.yearly ? 12 : 1;
+  let html = `<div class="search tvbar"><div class="tvdays tvslots">${VA_YEARS.map(yr => `<button type="button" class="chip" data-va="year" data-y="${yr}" aria-pressed="${vaUi.year === yr}">${yr}</button>`).join('')}
+    <button type="button" class="chip" data-va="per" aria-pressed="${!vaUi.yearly}">Monthly</button><button type="button" class="chip" data-va="per" aria-pressed="${vaUi.yearly}">Yearly</button></div></div>
+    <div class="card vatable"><table><thead><tr><th>Rating</th><th>Single</th><th>Married</th></tr></thead><tbody>
+    ${Object.keys(y.rows).map(Number).sort((a, b) => a - b).map(p => { const [s, m] = y.rows[p], up = prev && prev.rows[p] ? s - prev.rows[p][0] : 0;
+      return `<tr><th scope="row">${p}%</th><td>${usd(s * k)}${up > 0 && !vaUi.yearly ? `<span class="vaup">+${usd(up)}</span>` : ''}</td><td>${usd(m * k)}</td></tr>`; }).join('')}
+    </tbody></table></div>
+    <p class="hint">${esc(y.note)}</p>
+    <p class="hint">Single = veteran alone. Married = veteran with a spouse, no children or dependent parents. At 10% and 20% the amount is the same either way. ${vaUi.yearly ? 'Yearly = monthly × 12.' : prev ? `Green = increase over ${vaUi.year - 1}.` : ''}</p>
+    <div class="foot"><a class="btn small" href="https://www.va.gov/disability/compensation-rates/veteran-rates/" target="_blank" rel="noopener">VA’s rate table</a></div>`;
+  view.innerHTML = html;
+}
+view.addEventListener('click', e => {
+  const el = e.target.closest('[data-va]'); if (!el || route() !== 'vapay') return;
+  if (el.dataset.va === 'year') vaUi.year = +el.dataset.y; else vaUi.yearly = el.textContent === 'Yearly';
+  render();
 });
 
 
