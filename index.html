@@ -166,7 +166,17 @@ body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
 .gi .ico.emo{font-size:34px}
 .gi .nm{font-size:12px;font-weight:600;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
 .gi .star{position:absolute;top:-4px;right:6px;margin:0}
+.cols{display:grid;gap:2px 6px;padding:6px}
+.cols2{grid-template-columns:repeat(2,minmax(0,1fr))}.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ci{display:flex;align-items:center;gap:9px;padding:8px;border-radius:10px;min-height:50px;text-decoration:none;color:inherit;min-width:0}
+.ci:active{background:var(--soft)}
+.ci .ico{width:34px;height:34px;border-radius:9px;font-size:15px}.ci .ico.emo{font-size:21px}.ci .ico.l3{font-size:11px}
+.ci .nm{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cols3 .ci{gap:7px;padding:7px 5px}.cols3 .ci .ico{width:28px;height:28px;border-radius:7px;font-size:13px}.cols3 .ci .ico.emo{font-size:18px}.cols3 .ci .ico.l3{font-size:10px}.cols3 .ci .nm{font-size:13px}
+.ci .star{font-size:11px;margin-left:-4px;flex:none}
 .edit-tools{display:flex;gap:4px;flex:none}
+#ask .ask-actions{flex-direction:column;align-items:stretch}
+#ask .ask-actions .btn{justify-content:flex-start}
 .edit-tools .btn{min-width:36px;padding:0 8px}
 .gh{display:flex;align-items:center;gap:6px}
 .gh .grow{flex:1}
@@ -735,6 +745,8 @@ async function syncAction(a) {
 
 
 /* ===================== Links: personal bookmarks ===================== */
+/* views: [key, label, button symbol] */
+const VIEWS = [['list', 'List with addresses', '☰'], ['icons', 'Big icons', '▦'], ['cols2', 'Icons and names, 2 columns', '⠿'], ['cols3', 'Icons and names, 3 columns', '⁝⁝']];
 const APP_ID = 'goobs-links', DB_NAME = 'goobs-links-db', SCHEMA = 1;
 const MAX_LINKS = 2000, MAX_GROUPS = 100, RECENT_N = 4;
 const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a', '#ca8a04', '#0891b2', '#7c3aed', '#db2777', '#4d7c0f', '#b45309'];
@@ -763,7 +775,7 @@ function normState(s) {
   const ids = new Set(groups.map(g => g.id)), lseen = new Set();
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
-  const out = { v: 1, view: s.view === 'icons' ? 'icons' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '' };
+  const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '' };
   resort(out); return out;
 }
 /* order is kept as a number on each link and group, so a move syncs as a change to just the two that swapped */
@@ -883,17 +895,18 @@ function ensureGroup(name) {
 const view = $('#view');
 function linkHTML(l, mode) {
   const open = `href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" data-open="${esc(l.id)}"`;
+  if (/^cols/.test(mode) && !ui.edit) return `<a class="ci" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
   if (mode === 'icons' && !ui.edit) return `<a class="gi" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
   const body = `${tileHTML(l)}<div class="main"><div class="nm">${esc(l.name)}${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</div><div class="host">${esc(l.note || shortUrl(l.url))}</div></div>`;
   if (!ui.edit) return `<a class="lrow" ${open}>${body}</a>`;
   return `<div class="lrow">${body}<div class="edit-tools"><button type="button" class="btn small" data-act="up" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} up">↑</button><button type="button" class="btn small" data-act="down" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} down">↓</button><button type="button" class="btn small" data-act="edit" data-id="${esc(l.id)}">Edit</button></div></div>`;
 }
-const block = (list, mode) => (mode === 'icons' && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
+const block = (list, mode) => (/^cols/.test(mode) && !ui.edit ? `<div class="card cols ${mode}">${list.map(l => linkHTML(l, mode)).join('')}</div>` : mode === 'icons' && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
 function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + groupName(l.group) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
 function render() {
   const mode = state.view, total = state.links.length;
-  $('#viewBtn').textContent = mode === 'icons' ? '☰' : '▦';
-  $('#viewBtn').setAttribute('aria-label', mode === 'icons' ? 'Show as a list' : 'Show as icons');
+  const vw = VIEWS.find(v => v[0] === mode) || VIEWS[0];
+  $('#viewBtn').textContent = vw[2]; $('#viewBtn').setAttribute('aria-label', `View: ${vw[1]}. Change view`);
   $('#editBtn').textContent = ui.edit ? 'Done' : 'Edit';
   $('#sub').textContent = total ? `${total} link${total === 1 ? '' : 's'}` : '';
   $('#syncSlot').innerHTML = syncBadgeHTML();
@@ -1089,7 +1102,10 @@ async function doRestore() {
 
 /* ---- events ---- */
 $('#addBtn').onclick = () => linkDialog(null);
-$('#viewBtn').onclick = () => { state.view = state.view === 'icons' ? 'list' : 'icons'; commit(); };
+$('#viewBtn').onclick = async () => {
+  const v = await askDialog({ title: 'View', body: '<p class="muted">Each device keeps its own choice.</p>', buttons: [...VIEWS.map(([k, label, sym]) => ({ label: `${sym}  ${label}${k === state.view ? '  ✓' : ''}`, value: k, kind: k === state.view ? 'primary' : '' })), { label: 'Cancel', value: null, kind: 'ghost' }] });
+  if (v && v !== state.view) { state.view = v; save(); render(); }
+};
 $('#editBtn').onclick = () => { ui.edit = !ui.edit; render(); };
 document.addEventListener('click', e => { const s = e.target.closest('[data-action^="sync-"]'); if (s) { e.preventDefault(); syncAction(s.dataset.action); } });
 view.addEventListener('click', e => {
