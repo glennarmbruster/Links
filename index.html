@@ -1,0 +1,1130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Links</title>
+<meta name="description" content="Your bookmarks in one place: groups, search, favorites, list or icon view. Stays on this device.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Links">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root{
+  --bg:#f5f4ef; --card:#ffffff; --ink:#1b2420; --muted:#66736d; --line:#e2e0d6; --soft:#efede5;
+  --accent:#0f766e; --accent-ink:#ffffff; --accent-soft:#d9f0ec;
+  --bad:#b42318; --bad-soft:#fde8e6; --warn:#9a5b00; --warn-soft:#fdf0d5; --ok:#166534; --ok-soft:#dcf5e3;
+  --radius:14px; --shadow:0 1px 2px rgba(16,24,20,.06),0 6px 18px rgba(16,24,20,.06);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1311; --card:#171f1c; --ink:#e7eeeb; --muted:#97a69f; --line:#27332e; --soft:#1e2824;
+    --accent:#2dd4bf; --accent-ink:#06211d; --accent-soft:#12332e;
+    --bad:#ff8a80; --bad-soft:#3a1a18; --warn:#f6c26b; --warn-soft:#3a2c12; --ok:#7ee2a0; --ok-soft:#14301f;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  padding-bottom:calc(92px + env(safe-area-inset-bottom));
+}
+a{color:var(--accent)}
+h1,h2,h3{margin:0;line-height:1.2}
+h3{font-size:16px}
+p{margin:0 0 8px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+.muted{color:var(--muted)} .bad{color:var(--bad)} .warn{color:var(--warn)} .ok{color:var(--ok)}
+.num{font-variant-numeric:tabular-nums}
+.hide{display:none!important}
+.pad{padding:14px 16px}
+.hint{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* header */
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+header.top .wrap{display:flex;align-items:center;gap:12px;min-height:58px}
+header.top .grow{flex:1;min-width:0}
+header.top h1{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header.top .sub{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back{display:inline-flex;align-items:center;min-height:44px;padding-right:6px;text-decoration:none;font-weight:600}
+
+/* cards, tiles, lists */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.tile{padding:12px}
+.tile .lbl{font-size:12px;color:var(--muted);font-weight:600}
+.tile .val{font-size:20px;font-weight:700;margin-top:2px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:22px 4px 8px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.sec-h .btn{text-transform:none;letter-spacing:0}
+.list{list-style:none;margin:0;padding:0}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer}
+.row:first-child{border-top:0}
+.row.static{cursor:default}
+.row-main{flex:1;min-width:0}
+.row-title{font-weight:600;overflow-wrap:anywhere}
+.row-sub{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.row-amt{font-weight:700;white-space:nowrap}
+.row.faded{opacity:.6}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--soft);color:var(--muted);vertical-align:middle;margin-left:6px}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.warn{background:var(--warn-soft);color:var(--warn)} .badge.bad{background:var(--bad-soft);color:var(--bad)} .badge.acc{background:var(--accent-soft);color:var(--accent)}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .big{font-size:40px;line-height:1;margin-bottom:10px}
+.empty h2{color:var(--ink);font-size:18px;margin-bottom:6px}
+.empty .btn{margin-top:14px}
+.banner{padding:12px 14px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:14px;margin:14px 0;display:flex;gap:10px;justify-content:space-between;align-items:center}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.bar.over>i{background:var(--bad)}
+
+/* buttons */
+.btn{white-space:nowrap;appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;min-height:44px;padding:0 16px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--accent)}
+.btn.small{min-height:36px;padding:0 12px;font-size:14px;border-radius:10px}
+.btn.block{width:100%}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,.chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;min-height:36px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* bottom nav + fab */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs .wrap{display:flex;padding:0}
+nav.tabs a,nav.tabs button{flex:1;min-height:58px;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;text-decoration:none}
+nav.tabs .ico{font-size:20px;line-height:1}
+nav.tabs [aria-current="page"]{color:var(--accent)}
+.fab{position:fixed;right:max(16px,calc(50vw - 344px));bottom:calc(74px + env(safe-area-inset-bottom));z-index:7;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:30px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}
+.fab:active{transform:scale(.96)}
+
+/* forms + dialogs */
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+textarea{min-height:92px;resize:vertical}
+input[type=checkbox]{width:22px;height:22px;min-height:0;padding:0;accent-color:var(--accent);flex:none}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.field.check{display:flex;align-items:center;gap:10px}
+.field.check label{margin:0;color:var(--ink);font-size:16px;font-weight:500}
+.fields2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+dialog{border:0;border-radius:18px;padding:0;width:calc(100vw - 24px);max-width:520px;background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,15,12,.55)}
+.dlg-form{padding:20px;display:flex;flex-direction:column;gap:12px;max-height:85vh;max-height:85dvh;overflow:auto}
+.dlg-form h2{font-size:19px}
+.dlg-actions{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.dlg-actions .spacer{flex:1}
+.ask-actions{justify-content:flex-end}
+.dlg-err{color:var(--bad);font-size:14px}
+.dlg-err:empty{display:none}
+.ask-body{font-size:15px;color:var(--ink)}
+.ask-body p{margin:0 0 8px}
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+.checkgrid .field.check label{font-size:15px}
+
+/* toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#1b2420;color:#fff;padding:12px 16px;border-radius:12px;display:flex;gap:14px;align-items:center;z-index:60;max-width:calc(100vw - 24px);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:15px}
+.toast button{background:none;border:0;color:#7dd3c8;font:inherit;font-weight:700;cursor:pointer;min-height:36px}
+
+@media (prefers-reduced-motion:no-preference){.btn,.fab{transition:transform .08s}}
+
+.syncbadge{flex:none;white-space:nowrap;border:1px solid var(--line,#d5dbe0);background:var(--card,#fff);color:inherit;border-radius:999px;padding:4px 10px;font:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap}
+.syncbadge.ok{color:#15803d}.syncbadge.bad{color:#b91c1c}
+.seg{display:flex;gap:8px;margin-top:6px}.seg .chip{flex:1;text-align:center}
+
+:root{--accent:#2563eb;--accent-soft:#dbe6fd;--bg:#f3f5f9;--soft:#e9edf4;--line:#dde2ea}
+@media (prefers-color-scheme:dark){:root{--accent:#7aa2ff;--accent-ink:#0b1330;--accent-soft:#18233f;--bg:#0e1116;--card:#171b22;--soft:#1e232c;--line:#283040}}
+body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+.hbtn{min-width:44px;padding:0 10px;font-size:18px}
+.search{position:sticky;top:calc(58px + env(safe-area-inset-top));z-index:4;background:var(--bg);padding:10px 0 4px}
+.search input{border-radius:12px;background:var(--card)}
+.ico{width:40px;height:40px;border-radius:10px;flex:none;display:grid;place-items:center;overflow:hidden;background:var(--soft);font-weight:800;color:#fff;font-size:17px;letter-spacing:-.02em}
+.ico{position:relative}
+.ico img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#fff;opacity:0}
+.ico img.ok{opacity:1}
+.ico.emo{background:var(--soft);font-size:24px}
+.ico.l3{font-size:13px}.gi .ico.l3{font-size:19px}
+.more-btn{align-self:flex-start}
+.lrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line);color:inherit;text-decoration:none;min-height:60px}
+.lrow:first-child{border-top:0}
+.lrow .main{flex:1;min-width:0}
+.lrow .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .host{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.star{color:#f5b301;font-size:14px;margin-left:4px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;padding:14px 8px}
+.gi{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:inherit;min-width:0;position:relative}
+.gi .ico{width:60px;height:60px;border-radius:15px;font-size:24px}
+.gi .ico.emo{font-size:34px}
+.gi .nm{font-size:12px;font-weight:600;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.gi .star{position:absolute;top:-4px;right:6px;margin:0}
+.edit-tools{display:flex;gap:4px;flex:none}
+.edit-tools .btn{min-width:36px;padding:0 8px}
+.gh{display:flex;align-items:center;gap:6px}
+.gh .grow{flex:1}
+.foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:26px 0 10px}
+.hint.c{text-align:center}
+textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size:14px}
+.emo-pick{display:flex;flex-wrap:wrap;gap:6px}
+.emo-pick button{font-size:22px;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.emo-pick button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="grow"><h1 id="title">Links</h1><div class="sub" id="sub"></div></div>
+  <span id="syncSlot"></span><button type="button" class="btn small ghost hbtn" id="viewBtn" aria-label="Switch view"></button>
+  <button type="button" class="btn small ghost" id="editBtn">Edit</button>
+  <button type="button" class="btn small primary hbtn" id="addBtn" aria-label="Add a link">+</button>
+</div></header>
+<main class="wrap" id="view"></main>
+<script>
+'use strict';
+/* ===================== shared helpers (identical in every Goobs app) ===================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isNum = v => typeof v === 'number' && Number.isFinite(v);
+const str = v => (typeof v === 'string' ? v : v == null ? '' : String(v));
+
+/* ---- dates: always local calendar dates stored as 'YYYY-MM-DD' ---- */
+const pad = n => String(n).padStart(2, '0');
+const fmtISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const isISO = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && fmtISO(parseISO(s)) === s;
+const todayISO = () => fmtISO(new Date());
+const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+const addDays = (s, n) => { const d = parseISO(s); d.setDate(d.getDate() + n); return fmtISO(d); };
+function addMonths(s, n, anchorDay) {
+  const d = parseISO(s);
+  const day = anchorDay || d.getDate();
+  const first = new Date(d.getFullYear(), d.getMonth() + n, 1);
+  const last = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  first.setDate(Math.min(day, last));
+  return fmtISO(first);
+}
+const monthEndISO = s => { const d = parseISO(s); return fmtISO(new Date(d.getFullYear(), d.getMonth() + 1, 0)); };
+
+function fmtDate(s, withWeekday = true) {
+  const d = parseISO(s);
+  const o = { month: 'short', day: 'numeric' };
+  if (withWeekday) o.weekday = 'short';
+  if (d.getFullYear() !== new Date().getFullYear()) o.year = 'numeric';
+  return d.toLocaleDateString(undefined, o);
+}
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? 'unknown date' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+const _mf = {};
+function money(n, cur = 'USD') {
+  if (!_mf[cur]) {
+    try { _mf[cur] = new Intl.NumberFormat(undefined, { style: 'currency', currency: cur }); }
+    catch { _mf[cur] = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }); }
+  }
+  return _mf[cur].format(n);
+}
+const csvCell = v => {
+  let s = String(v ?? '');
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // neutralise spreadsheet formula injection
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+};
+function safeUrl(u) {
+  let s = String(u ?? '').trim();
+  if (!s) return '';
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s;
+  try { const x = new URL(s); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch { return ''; }
+}
+
+/* ---- storage: one JSON string under one key in IndexedDB ---- */
+function openDB(name) {
+  return new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('IndexedDB unavailable'));
+    const r = indexedDB.open(name, 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore('kv'); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error('Database blocked'));
+  });
+}
+function idbGet(db, key) {
+  return new Promise((res, rej) => {
+    const q = db.transaction('kv').objectStore('kv').get(key);
+    q.onsuccess = () => res(q.result);
+    q.onerror = () => rej(q.error);
+  });
+}
+function idbPut(db, key, val) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').put(val, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error || new Error('Write aborted'));
+  });
+}
+
+/* ---- toast ---- */
+function toast(msg, action) {
+  const old = $('.toast'); if (old) old.remove();
+  const t = document.createElement('div');
+  t.className = 'toast'; t.setAttribute('role', 'status');
+  t.innerHTML = `<span>${esc(msg)}</span>` + (action ? `<button type="button">${esc(action.label)}</button>` : '');
+  if (action) t.querySelector('button').onclick = () => { t.remove(); action.fn(); };
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), action ? 8000 : 3200);
+}
+
+/* ---- dialogs ---- */
+if (!$('#dlg')) document.body.insertAdjacentHTML('beforeend', '<dialog id="dlg"></dialog><dialog id="ask"></dialog>');
+{
+  const dlg = $('#dlg'); let down = false;
+  dlg.addEventListener('pointerdown', e => { down = e.target === dlg; });
+  dlg.addEventListener('click', e => { if (e.target === dlg && down) dlg.close(); });
+}
+
+function fieldHTML(f) {
+  const id = 'f_' + f.name, v = f.value ?? '';
+  if (f.type === 'checkbox')
+    return `<div class="field check"><input type="checkbox" id="${id}" name="${f.name}"${f.value ? ' checked' : ''}><label for="${id}">${esc(f.label)}</label></div>`;
+  let ctl;
+  if (f.type === 'select') {
+    ctl = `<select id="${id}" name="${f.name}">${f.options.map(o => {
+      const [val, label] = Array.isArray(o) ? o : [o, o];
+      return `<option value="${esc(val)}"${String(val) === String(v) ? ' selected' : ''}>${esc(label)}</option>`;
+    }).join('')}</select>`;
+  } else if (f.type === 'textarea') {
+    ctl = `<textarea id="${id}" name="${f.name}" placeholder="${esc(f.placeholder || '')}">${esc(v)}</textarea>`;
+  } else {
+    const t = f.type || 'text';
+    const extra = t === 'number' ? ` inputmode="decimal" step="${f.step || 'any'}"` : '';
+    ctl = `<input id="${id}" name="${f.name}" type="${t}" value="${esc(v)}" placeholder="${esc(f.placeholder || '')}"${extra}${f.min != null ? ` min="${f.min}"` : ''}${f.max != null ? ` max="${f.max}"` : ''} autocomplete="${f.autocomplete || 'off'}" autocapitalize="${f.capitalize || (t === 'email' || t === 'password' ? 'none' : 'sentences')}">`;
+  }
+  return `<div class="field"><label for="${id}">${esc(f.label)}${f.required ? ' *' : ''}</label>${ctl}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ''}</div>`;
+}
+
+/* formDialog: fields -> values. onSubmit(values) may return an error string (keeps dialog open).
+   onDelete() may return true to close. extra: [{label, kind, onClick}] extra buttons. */
+function formDialog({ title, intro = '', fields, submitLabel = 'Save', onSubmit, onDelete, deleteLabel = 'Delete', extra = [], onClose, grid = '' }) {
+  const dlg = $('#dlg');
+  const body = grid ? `<div class="${grid}">${fields.map(fieldHTML).join('')}</div>` : fields.map(fieldHTML).join('');
+  dlg.innerHTML = `<form class="dlg-form" novalidate>
+    <h2>${esc(title)}</h2>${intro ? `<p class="muted">${esc(intro)}</p>` : ''}${body}
+    <div class="dlg-err" role="alert"></div>
+    <div class="dlg-actions">
+      ${onDelete ? `<button type="button" class="btn danger" data-k="del">${esc(deleteLabel)}</button>` : ''}
+      ${extra.map((x, i) => `<button type="button" class="btn ${x.kind || ''}" data-x="${i}">${esc(x.label)}</button>`).join('')}
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-k="cancel">Cancel</button>
+      <button type="submit" class="btn primary">${esc(submitLabel)}</button>
+    </div></form>`;
+  const form = $('form', dlg), err = $('.dlg-err', dlg);
+  const collect = () => {
+    const vals = {};
+    for (const f of fields) { const el = form.elements[f.name]; vals[f.name] = f.type === 'checkbox' ? el.checked : el.value; }
+    return vals;
+  };
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const vals = collect();
+    for (const f of fields) if (f.required && !String(vals[f.name]).trim()) { err.textContent = `${f.label} is required.`; return; }
+    err.textContent = '';
+    let msg;
+    try { msg = await onSubmit(vals); } catch (ex) { msg = ex.message || 'Something went wrong.'; }
+    if (msg) err.textContent = msg; else dlg.close();
+  });
+  $('[data-k="cancel"]', dlg).onclick = () => dlg.close();
+  if (onDelete) $('[data-k="del"]', dlg).onclick = async () => { if (await onDelete()) dlg.close(); };
+  $$('[data-x]', dlg).forEach(b => { b.onclick = () => extra[+b.dataset.x].onClick(collect()); });
+  dlg.onclose = () => { dlg.onclose = null; if (onClose) onClose(); };
+  dlg.showModal();
+  const first = form.querySelector('input:not([type=checkbox]),textarea');
+  if (first && !first.value) first.focus(); // new-item forms open ready to type; edit forms don't pop the keyboard
+}
+
+function askDialog({ title, body = '', buttons }) {
+  return new Promise(resolve => {
+    const d = $('#ask'); let done = false;
+    d.innerHTML = `<div class="dlg-form"><h2>${esc(title)}</h2>${body ? `<div class="ask-body">${body}</div>` : ''}
+      <div class="dlg-actions ask-actions">${buttons.map((b, i) => `<button type="button" class="btn ${b.kind || ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+    const finish = v => { if (done) return; done = true; d.close(); resolve(v); };
+    $$('button', d).forEach(btn => { btn.onclick = () => finish(buttons[+btn.dataset.i].value); });
+    d.oncancel = () => { done = true; resolve(undefined); };
+    d.showModal();
+  });
+}
+const confirmBox = async (title, bodyText, okLabel = 'Delete', danger = true) =>
+  (await askDialog({ title, body: bodyText ? `<p>${esc(bodyText)}</p>` : '', buttons: [{ label: 'Cancel', value: false }, { label: okLabel, value: true, kind: danger ? 'danger' : 'primary' }] })) === true;
+const msgBox = (title, bodyText) =>
+  askDialog({ title, body: `<p>${esc(bodyText)}</p>`, buttons: [{ label: 'OK', value: true, kind: 'primary' }] });
+
+/* ---- backup: optional AES-GCM passphrase encryption (Web Crypto, PBKDF2-SHA256) ---- */
+const b64 = buf => { let s = ''; const b = new Uint8Array(buf); for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function deriveKey(pass, salt, iterations) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function encryptPayload(obj, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const iterations = 250000;
+  const key = await deriveKey(pass, salt, iterations);
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return { encrypted: true, kdf: 'PBKDF2-SHA256', iterations, salt: b64(salt), iv: b64(iv), data: b64(ct) };
+}
+async function decryptPayload(env, pass) {
+  const key = await deriveKey(pass, unb64(env.salt), env.iterations);
+  try {
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(env.iv) }, key, unb64(env.data));
+    return JSON.parse(new TextDecoder().decode(pt));
+  } catch { throw new Error('Wrong passphrase, or the file is damaged.'); }
+}
+function promptDecrypt(env) {
+  return new Promise(resolve => {
+    let result = null;
+    formDialog({
+      title: 'Encrypted backup', intro: 'Enter the passphrase you chose when you made this backup.',
+      fields: [{ name: 'pass', label: 'Passphrase', type: 'password', required: true }], submitLabel: 'Unlock',
+      onSubmit: async v => { try { result = await decryptPayload(env, v.pass); } catch (e) { return e.message; } },
+      onClose: () => resolve(result)
+    });
+  });
+}
+const Backup = {
+  async build({ appId, schema, data, passphrase }) {
+    const head = { app: appId, schemaVersion: schema, exportedAt: new Date().toISOString() };
+    if (passphrase) return JSON.stringify({ ...head, ...(await encryptPayload(data, passphrase)) });
+    return JSON.stringify({ ...head, encrypted: false, data }, null, 2);
+  },
+  /* returns {data, exportedAt, schemaVersion}, or null if the user cancelled the passphrase prompt; throws Error with a friendly message */
+  async parse(text, { appId, schema }) {
+    let env;
+    try { env = JSON.parse(text); } catch { throw new Error('That file isn’t a valid backup (it isn’t JSON).'); }
+    if (!env || typeof env !== 'object' || env.app !== appId)
+      throw new Error(env && typeof env === 'object' && env.app ? `That backup belongs to a different app (${String(env.app).slice(0, 40)}).` : 'That file isn’t a backup from this app.');
+    if (!Number.isInteger(env.schemaVersion) || env.schemaVersion < 1) throw new Error('The backup is missing its version number.');
+    if (env.schemaVersion > schema) throw new Error('That backup was made by a newer version of the app. Close and reopen this app to update it, then try again.');
+    let data;
+    if (env.encrypted) {
+      if (!(window.crypto && crypto.subtle)) throw new Error('Encrypted backups need a secure (https) connection.');
+      if (!(env.iterations >= 1000 && env.iterations <= 2000000) || typeof env.salt !== 'string' || typeof env.iv !== 'string' || typeof env.data !== 'string')
+        throw new Error('The encrypted backup is damaged.');
+      data = await promptDecrypt(env);
+      if (data === null) return null;
+    } else data = env.data;
+    if (!data || typeof data !== 'object') throw new Error('The backup contains no data.');
+    return { data, exportedAt: typeof env.exportedAt === 'string' ? env.exportedAt : null, schemaVersion: env.schemaVersion };
+  }
+};
+
+/* share sheet when the platform supports sharing files (iPhone), otherwise a normal download */
+async function deliverFile(filename, text, mime = 'application/json') {
+  const file = new File([text], filename, { type: mime });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: filename }); return 'shared'; }
+    catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; /* otherwise fall back to a download */ }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
+  return 'downloaded';
+}
+function pickFile(accept = '.json,application/json') {
+  return new Promise(resolve => {
+    const i = document.createElement('input');
+    i.type = 'file'; i.accept = accept; i.style.display = 'none';
+    document.body.appendChild(i);
+    let done = false;
+    const fin = f => { if (done) return; done = true; i.remove(); resolve(f); };
+    i.addEventListener('change', () => fin((i.files && i.files[0]) || null));
+    i.addEventListener('cancel', () => fin(null));
+    i.click();
+  });
+}
+const readFileText = f => (f.text ? f.text() : new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(f); }));
+
+/* nag banner: only when there is data and no recent backup */
+function backupNag(meta, hasData) {
+  if (!hasData) return null;
+  if (!meta.lastBackup) return 'You have data but no backup yet. Make one so you can restore it if this device loses it.';
+  const age = (Date.now() - Date.parse(meta.lastBackup)) / 86400000;
+  const changed = meta.lastChange && Date.parse(meta.lastChange) > Date.parse(meta.lastBackup) + 1000;
+  if (changed && age >= 7) return `Your last backup was ${Math.floor(age)} days ago and you’ve made changes since.`;
+  return null;
+}
+
+/* ---- install helper ---- */
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; if (typeof render === 'function') render(); });
+const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+function installCardHTML() {
+  if (isStandalone()) return '';
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const msg = deferredInstall
+    ? '<p>Install it for its own window and full offline use.</p><button class="btn primary" data-action="install">Install app</button>'
+    : ios
+      ? '<p>In Safari tap <b>Share</b> → <b>Add to Home Screen</b>. <b>Do this before entering data</b> — the home-screen app keeps its own separate storage from the Safari tab. Then open it from the new icon.</p>'
+      : '<p>Use your browser’s menu → <b>Install app</b> (or <b>Add to Home Screen</b>).</p>';
+  return `<section class="card pad"><h3>Install on this device</h3>${msg}</section>`;
+}
+async function runInstall() { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch {} deferredInstall = null; if (typeof render === 'function') render(); }
+
+
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol))
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+
+
+
+/* ---- Sync: optional shared database for two people (Firebase Auth + Firestore) ----
+   The app always works from its own on-device copy. This layer pushes local changes
+   (per item, last write wins) and merges in changes made on the other phone.
+   The Firebase calls live in firebaseBackend() only; everything else is plain logic. */
+const SYNC_CONFIG = {
+  apiKey: 'AIzaSyCztAn5kfhZ1yLjvia17D0dEsnDBvFzuKA',
+  authDomain: 'goobs-apps-aa819.firebaseapp.com',
+  projectId: 'goobs-apps-aa819',
+  storageBucket: 'goobs-apps-aa819.firebasestorage.app',
+  messagingSenderId: '1080769702714',
+  appId: '1:1080769702714:web:70a664d22a62ee9492fe03'
+};
+const SYNC_SDK = 'https://www.gstatic.com/firebasejs/12.19.0/';
+
+async function firebaseBackend() {
+  const [appM, authM, fsM] = await Promise.all([
+    import(SYNC_SDK + 'firebase-app.js'), import(SYNC_SDK + 'firebase-auth.js'), import(SYNC_SDK + 'firebase-firestore.js')
+  ]);
+  const app = appM.initializeApp(SYNC_CONFIG), auth = authM.getAuth(app), fs = fsM.getFirestore(app);
+  return {
+    onAuth: cb => authM.onAuthStateChanged(auth, u => cb(u ? { uid: u.uid, email: u.email || '' } : null)),
+    signIn: (email, pw) => authM.signInWithEmailAndPassword(auth, email, pw),
+    signOut: () => authM.signOut(auth),
+    watch: (coll, onDocs, onErr) => fsM.onSnapshot(fsM.collection(fs, coll),
+      snap => { if (!snap.metadata.fromCache) onDocs(snap.docs.map(d => ({ id: d.id, data: d.data() }))); },   // ignore cache-only snapshots: an empty one would look like "everything was deleted"
+      onErr),
+    // Last write wins: skip the write when the stored copy is newer than this change.
+    // First-time uploads (ts 0) never overwrite a copy that already exists.
+    write: op => {
+      const ref = fsM.doc(fs, op.coll, op.id);
+      return fsM.runTransaction(fs, async tx => {
+        const cur = await tx.get(ref);
+        if (cur.exists() && (op.ts === 0 || (cur.data()._u || 0) > op.ts)) return;
+        if (op.op === 'del') tx.delete(ref);
+        else tx.set(ref, { ...op.data, _u: op.ts, _n: op.n });
+      });
+    }
+  };
+}
+
+const Sync = (() => {
+  const ACK_MS = 120000;
+  let model = null, db = null, dbKey = 'sync', backend = null, user = null, state0 = 'off';
+  let st = { v: 1, enabled: false, joined: false, seen: {}, outbox: {}, order: {} };
+  let unsubs = [], remote = {}, ready = {}, flushing = false, retryTimer = null, retries = 0, lastTs = 0, lastN = 0, denied = false, errored = false;
+  const acked = new Map(), listeners = [];
+
+  const canon = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.fromEntries(Object.keys(x).sort().map(y => [y, x[y]])) : x);
+  const nextTs = () => (lastTs = Math.max(Date.now(), lastTs + 1));
+  const nextN = () => (lastN = Math.max(Date.now() * 1000, lastN + 1));
+  const keyOf = (c, id) => c + '/' + id;
+  const pending = () => Object.keys(st.outbox).length;
+  const emit = () => { for (const f of listeners) try { f(); } catch (e) { console.error(e); } };
+  let saveChain = Promise.resolve();
+  function save() { if (!db) return; const s = JSON.stringify(st); saveChain = saveChain.then(() => idbPut(db, dbKey, s)).catch(e => console.error(e)); }
+
+  function status() {
+    if (!model) return 'off';
+    if (state0 === 'unavailable') return 'unavailable';
+    if (!user) return backend ? 'signed-out' : 'connecting';
+    if (denied) return 'denied';
+    if (errored) return 'error';
+    if (!model.colls.every(c => ready[c])) return 'connecting';
+    return pending() ? 'syncing' : 'live';
+  }
+
+  /* what changed on this device since we last synced -> queue it */
+  function localDiff() {
+    if (!st.enabled || !model) return;
+    const present = new Set(); let dirty = false;
+    for (const e of model.toEntities()) {
+      const k = keyOf(e.coll, e.id); present.add(k);
+      const j = canon(e.data);
+      if (st.seen[k] === j) continue;
+      st.seen[k] = j;
+      if (!(k in st.order)) st.order[k] = nextN();
+      st.outbox[k] = { op: 'set', coll: e.coll, id: e.id, data: JSON.parse(j), ts: st.joined ? nextTs() : 0, n: st.order[k] };
+      dirty = true;
+    }
+    for (const k of Object.keys(st.seen)) {
+      if (present.has(k)) continue;
+      delete st.seen[k];
+      const i = k.indexOf('/');
+      st.outbox[k] = { op: 'del', coll: k.slice(0, i), id: k.slice(i + 1), ts: st.joined ? nextTs() : 0 };
+      dirty = true;
+    }
+    if (dirty) save();
+  }
+
+  /* combine the other phone's data with ours and hand the result to the app */
+  function reconcile() {
+    if (!model || !user || !model.colls.every(c => ready[c])) return;
+    localDiff();
+    const now = Date.now(), out = {}, remoteKeys = new Set();
+    model.colls.forEach(c => { out[c] = []; });
+    for (const c of model.colls) for (const d of remote[c] || []) {
+      const k = keyOf(c, d.id), op = st.outbox[k], u = d.data._u || 0, a = acked.get(k);
+      remoteKeys.add(k);
+      if (op && op.ts > u) { if (op.op === 'set') out[c].push({ id: d.id, data: op.data, n: op.n }); continue; }
+      if (op) delete st.outbox[k];
+      if (a && a.op === 'del' && now - a.at < ACK_MS && u <= a.ts) continue;   // our delete just landed; the list is a moment behind
+      const { _u, _n, ...data } = d.data;
+      if (_n) st.order[k] = _n;
+      out[c].push({ id: d.id, data, n: _n || st.order[k] || 0 });
+    }
+    for (const e of model.toEntities()) {
+      const k = keyOf(e.coll, e.id);
+      if (remoteKeys.has(k)) continue;
+      const op = st.outbox[k], a = acked.get(k);
+      if ((op && op.op === 'set') || (a && a.op === 'set' && now - a.at < ACK_MS)) out[e.coll].push({ id: e.id, data: e.data, n: st.order[k] || 0 });
+      // otherwise it was deleted on the other phone: leave it out
+    }
+    for (const [k, a] of acked) if (now - a.at >= ACK_MS || (a.op === 'set') === remoteKeys.has(k)) acked.delete(k);
+    for (const c of model.colls) out[c].sort((x, y) => (x.n || 0) - (y.n || 0));
+    model.apply(out);
+    const inOut = new Set();
+    for (const c of model.colls) for (const o of out[c]) inOut.add(keyOf(c, o.id));
+    const seen = {};
+    for (const e of model.toEntities()) { const k = keyOf(e.coll, e.id); if (inOut.has(k)) seen[k] = canon(e.data); }
+    st.seen = seen; st.joined = true;
+    localDiff();            // anything the app created while merging (e.g. a starter list) gets queued
+    save(); emit(); flush();
+  }
+
+  async function flush() {
+    if (flushing || !backend || !user || !st.enabled) return;
+    if (!st.joined && !model.colls.every(c => ready[c])) return;   // first sign-in: read what is there before writing
+    flushing = true; let failed = false;
+    try {
+      for (const k of Object.keys(st.outbox)) {
+        const op = st.outbox[k];
+        await backend.write(op);
+        if (st.outbox[k] === op) delete st.outbox[k];
+        acked.set(k, { op: op.op, ts: op.ts, at: Date.now() });
+        retries = 0; errored = false;
+      }
+    } catch (e) {
+      failed = true; errored = !(typeof navigator !== 'undefined' && navigator.onLine === false);
+      console.warn('sync write failed', e && e.code || e);
+      if (e && e.code === 'permission-denied') { denied = true; errored = false; }
+      else { clearTimeout(retryTimer); retryTimer = setTimeout(flush, Math.min(60000, 3000 * 2 ** Math.min(retries++, 5))); }
+    }
+    flushing = false; save(); emit();
+    if (!failed && pending()) flush();
+  }
+
+  function watch() {
+    unwatch();
+    for (const c of model.colls) {
+      unsubs.push(backend.watch(c, docs => { remote[c] = docs; ready[c] = true; denied = false; reconcile(); },
+        e => { if (e && e.code === 'permission-denied') denied = true; else errored = true; emit(); }));
+    }
+  }
+  function unwatch() { unsubs.forEach(u => { try { u(); } catch {} }); unsubs = []; remote = {}; ready = {}; }
+
+  async function connect() {
+    try {
+      const injected = typeof window !== 'undefined' && window.__SYNC_BACKEND__;
+      backend = injected || await firebaseBackend();
+      state0 = 'ok';
+    } catch (e) { backend = null; state0 = 'unavailable'; emit(); return; }
+    backend.onAuth(u => {
+      user = u; denied = false; errored = false;
+      if (u) { if (!st.enabled) { st.enabled = true; save(); } localDiff(); watch(); flush(); }
+      else unwatch();
+      emit();
+    });
+  }
+
+  return {
+    /* the app gives us: db (IndexedDB handle), key, and a model { colls, toEntities(), apply(map) } */
+    async start({ db: d, key, model: m }) {
+      db = d; dbKey = key || 'sync'; model = m;
+      if (db) { try { const raw = await idbGet(db, dbKey); if (raw) { const p = JSON.parse(raw); if (p && p.v === 1) st = { ...st, ...p }; } } catch (e) { console.error(e); } }
+      if (typeof window !== 'undefined') window.addEventListener('online', () => { if (!backend) connect(); else { errored = false; flush(); } });
+      await connect();
+      emit();
+    },
+    touch() { if (!st.enabled) return; localDiff(); flush(); emit(); },
+    onChange(f) { listeners.push(f); },
+    status, pending, enabled: () => st.enabled, user: () => user,
+    async signIn(email, pw) { if (!backend) throw Object.assign(new Error('offline'), { code: 'auth/network-request-failed' }); await backend.signIn(email, pw); },
+    async signOut() { if (backend) await backend.signOut(); }
+  };
+})();
+
+/* ---- sign-in UI shared by every synced app ---- */
+function syncText() {
+  const s = Sync.status(), n = Sync.pending();
+  switch (s) {
+    case 'live': return { icon: '☁️', text: 'Shared and up to date', cls: 'ok' };
+    case 'syncing': return { icon: '🔄', text: `Syncing ${n} change${n === 1 ? '' : 's'}…`, cls: '' };
+    case 'connecting': return { icon: '🔄', text: 'Connecting…', cls: '' };
+    case 'signed-out': return { icon: '👤', text: 'Not signed in — only on this device', cls: '' };
+    case 'denied': return { icon: '⛔', text: 'This account isn’t allowed to use the shared data', cls: 'bad' };
+    case 'error': return { icon: '⚠️', text: 'Sync problem — will retry. Your changes are saved here.', cls: 'bad' };
+    case 'unavailable': return { icon: '📴', text: Sync.enabled() ? 'Offline — changes are saved here and will sync later' : 'Sharing isn’t available right now (no connection)', cls: '' };
+    default: return { icon: '', text: '', cls: '' };
+  }
+}
+function syncBadgeHTML() {
+  const s = Sync.status(); if (s === 'off') return '';
+  const t = syncText();
+  return `<button type="button" class="syncbadge ${t.cls}" data-action="sync-info" aria-label="Sharing status: ${esc(t.text)}">${t.icon} <span>${esc({ live: 'Shared', 'signed-out': 'Sign in', unavailable: 'Offline', connecting: 'Connecting', syncing: 'Syncing', denied: 'Not allowed', error: 'Sync issue' }[s] || 'Sharing')}</span></button>`;
+}
+function syncCardHTML(blurb = '') {
+  const s = Sync.status(); if (s === 'off') return '';
+  const t = syncText(), u = Sync.user();
+  const btn = s === 'signed-out' || s === 'unavailable' && !u
+    ? '<button type="button" class="btn primary block" data-action="sync-signin">Sign in to share</button>'
+    : u ? `<button type="button" class="btn block" data-action="sync-signout">Sign out (${esc(u.email)})</button>` : '';
+  return `<section class="card pad" id="syncCard"><h3>Sharing</h3><p>${t.icon} ${esc(t.text)}</p>${blurb ? `<p class="muted">${esc(blurb)}</p>` : ''}${btn}</section>`;
+}
+function syncSignInDialog() {
+  formDialog({
+    title: 'Sign in to share', intro: 'Use the email and password for this app’s shared account. You only have to do this once on each phone.',
+    fields: [
+      { name: 'email', label: 'Email', type: 'email', required: true, autocomplete: 'username' },
+      { name: 'password', label: 'Password', type: 'password', required: true, autocomplete: 'current-password' }
+    ], submitLabel: 'Sign in',
+    onSubmit: async v => {
+      try { await Sync.signIn(v.email.trim(), v.password); }
+      catch (e) {
+        const c = e && e.code || '';
+        if (/invalid-credential|wrong-password|user-not-found|invalid-email|missing-password/.test(c)) return 'That email or password isn’t right.';
+        if (/network/.test(c) || e.message === 'offline') return 'Can’t reach the sign-in service. Check your connection and try again.';
+        if (/too-many-requests/.test(c)) return 'Too many tries. Wait a few minutes and try again.';
+        return 'Couldn’t sign in' + (c ? ` (${c})` : '') + '.';
+      }
+    }
+  });
+}
+async function syncAction(a) {
+  if (a === 'sync-signin') { syncSignInDialog(); return true; }
+  if (a === 'sync-signout') {
+    if (await confirmBox('Sign out?', 'This phone keeps its own copy, but stops sharing until you sign in again.', 'Sign out', false)) await Sync.signOut();
+    return true;
+  }
+  if (a === 'sync-info') {
+    if (Sync.status() === 'signed-out') { syncSignInDialog(); return true; }   // the "Sign in" badge opens the sign-in form directly
+    const t = syncText();
+    await msgBox('Sharing', t.text);
+    return true;
+  }
+  return false;
+}
+
+
+/* ===================== Links: personal bookmarks ===================== */
+const APP_ID = 'goobs-links', DB_NAME = 'goobs-links-db', SCHEMA = 1;
+const MAX_LINKS = 2000, MAX_GROUPS = 100, RECENT_N = 4;
+const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a', '#ca8a04', '#0891b2', '#7c3aed', '#db2777', '#4d7c0f', '#b45309'];
+const EMOJIS = ['🎬', '📺', '⬇️', '🗄️', '💻', '🖥️', '🇺🇸', '🩺', '💬', '🗳️', '📰', '🏈', '⚽', '🛒', '🏦', '✈️', '🍳', '🎵', '📷', '🏠', '🔧', '📈', '⭐', '🔗'];
+
+/* ---- model ---- */
+const defaultState = () => ({ v: 1, view: 'list', groups: [], links: [], lastGroup: '' });
+const clampStr = (v, n) => str(v).trim().slice(0, n);
+const linkUrl = u => { const s = safeUrl(u); return s && s.length <= 2000 ? s : ''; };
+const ordOf = v => (isNum(v) ? v : null);
+function normGroup(g) { if (!g || typeof g !== 'object') return null; const name = clampStr(g.name, 40); return name ? { id: clampStr(g.id, 40) || uid(), name, o: ordOf(g.o) } : null; }
+function normLink(l, groupIds) {
+  if (!l || typeof l !== 'object') return null;
+  const url = linkUrl(l.url); if (!url) return null;
+  const icon = str(l.icon);
+  return {
+    id: clampStr(l.id, 40) || uid(), name: clampStr(l.name, 60) || autoName(url), url,
+    group: groupIds.has(str(l.group)) ? str(l.group) : '', fav: !!l.fav, emoji: clampStr(l.emoji, 16),
+    icon: icon === 'none' || /^https:\/\/[^\s"'<>]{1,500}$/.test(icon) ? icon : '', iconAt: isNum(l.iconAt) ? l.iconAt : 0,
+    note: clampStr(l.note, 300), added: isNum(l.added) ? l.added : Date.now(), o: ordOf(l.o), opened: isNum(l.opened) ? l.opened : 0, uses: isNum(l.uses) ? Math.max(0, Math.floor(l.uses)) : 0
+  };
+}
+function normState(s) {
+  s = s && typeof s === 'object' ? s : {};
+  const seen = new Set(), groups = (Array.isArray(s.groups) ? s.groups : []).map(normGroup).filter(g => g && !seen.has(g.id) && seen.add(g.id)).slice(0, MAX_GROUPS);
+  const ids = new Set(groups.map(g => g.id)), lseen = new Set();
+  const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
+  groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
+  const out = { v: 1, view: s.view === 'icons' ? 'icons' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '' };
+  resort(out); return out;
+}
+/* order is kept as a number on each link and group, so a move syncs as a change to just the two that swapped */
+const byOrd = (a, b) => a.o - b.o || (a.added || 0) - (b.added || 0);
+function resort(s = state) { s.groups.sort(byOrd); s.links.sort(byOrd); }
+const nextOrd = list => list.reduce((m, x) => Math.max(m, x.o), -1) + 1;
+
+/* ---- names and addresses ---- */
+const isLocalHost = h => !h.includes('.') || /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || /^\[/.test(h) || /\.(local|lan|home|internal|arpa)$/.test(h);
+function hostOf(url) { try { return new URL(url).hostname; } catch { return ''; } }
+function shortUrl(url) {
+  try { const u = new URL(url); return (u.protocol === 'http:' ? 'http://' : '') + u.host.replace(/^www\./, '') + (u.pathname.length > 1 ? u.pathname.replace(/\/$/, '') : ''); } catch { return url; }
+}
+/* a readable name from the address: espn.com -> ESPN, va.gov -> VA, mediapc:7878 -> Mediapc 7878 */
+function autoName(url) {
+  let u; try { u = new URL(url); } catch { return 'Link'; }
+  const h = u.hostname.replace(/^www\./, '');
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(h)) return h + (u.port ? ':' + u.port : '');
+  const parts = h.split('.'), core = parts.length > 2 && /^(co|com|org|net|gov|ac)$/.test(parts[parts.length - 2]) ? parts[parts.length - 3] : parts.length > 1 ? parts[parts.length - 2] : parts[0];
+  const nice = core.length <= 4 ? core.toUpperCase() : core[0].toUpperCase() + core.slice(1);
+  return nice + (!h.includes('.') && u.port ? ' ' + u.port : '');
+}
+const colorOf = s => { let h = 0; for (const c of s) h = (h * 31 + c.codePointAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+const initials = n => { const w = n.trim().replace(/\.(com|gov|org|net|edu|io)$/i, ''); if (!w) return '?'; if (w.length <= 3 && /^[\p{L}\p{N}]+$/u.test(w)) return w.toUpperCase(); return [...w][0].toUpperCase(); };
+
+/* ---- site icons: the site's own Home Screen icon, then its favicon, then DuckDuckGo's icon service, then a letter tile.
+   Addresses on the home network (no dots, or an IP) can't be fetched from this https page, so they get a tile. ---- */
+const ICON_RETRY_MS = 30 * 86400000;
+function iconCandidates(l) {
+  let u; try { u = new URL(l.url); } catch { return []; }
+  if (u.protocol !== 'https:' || isLocalHost(u.hostname)) return [];
+  if (l.icon === 'none' && Date.now() - l.iconAt < ICON_RETRY_MS) return [];
+  const o = u.origin, list = [`${o}/apple-touch-icon.png`, `${o}/favicon.ico`, `https://icons.duckduckgo.com/ip3/${u.hostname}.ico`];
+  return l.icon && l.icon !== 'none' ? [l.icon, ...list.filter(x => x !== l.icon)] : list;
+}
+function tileHTML(l) {
+  if (l.emoji) return `<span class="ico emo" aria-hidden="true">${esc(l.emoji)}</span>`;
+  const c = iconCandidates(l), ini = initials(l.name), letter = `style="background:${colorOf(l.name)}"`;
+  if (!c.length) return `<span class="ico${ini.length > 2 ? ' l3' : ''}" ${letter} aria-hidden="true">${esc(ini)}</span>`;
+  /* the letter shows until the site icon has loaded, and stays if none does */
+  return `<span class="ico${ini.length > 2 ? ' l3' : ''}" ${letter} aria-hidden="true">${esc(ini)}<img alt="" loading="lazy" referrerpolicy="no-referrer" data-id="${esc(l.id)}" data-c="${esc(JSON.stringify(c))}" data-i="0" src="${esc(c[0])}"></span>`;
+}
+let iconSaveTimer = 0;
+const saveSoon = () => { clearTimeout(iconSaveTimer); iconSaveTimer = setTimeout(save, 800); };
+document.addEventListener('error', e => {
+  const img = e.target; if (!(img instanceof HTMLImageElement) || !img.dataset.c) return;
+  const c = JSON.parse(img.dataset.c), i = +img.dataset.i + 1;
+  if (i < c.length) { img.dataset.i = i; img.src = c[i]; return; }
+  img.remove();
+  const l = linkById(img.dataset.id); if (l && l.icon !== 'none') { l.icon = 'none'; l.iconAt = Date.now(); saveSoon(); }
+}, true);
+document.addEventListener('load', e => {
+  const img = e.target; if (!(img instanceof HTMLImageElement) || !img.dataset.c) return;
+  if (img.naturalWidth && img.naturalWidth < 8) { img.dispatchEvent(new Event('error')); return; }   /* 1-pixel placeholders */
+  img.classList.add('ok');
+  const l = linkById(img.dataset.id), src = img.getAttribute('src');
+  if (l && l.icon !== src) { l.icon = src; l.iconAt = Date.now(); saveSoon(); }
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ keepIcon: src });   /* kept for offline */
+}, true);
+
+/* ---- state ---- */
+let state = defaultState(), db = null;
+const ui = { q: '', edit: false };
+const linkById = id => state.links.find(l => l.id === id) || null;
+const groupById = id => state.groups.find(g => g.id === id) || null;
+const groupName = id => (groupById(id) || { name: 'Other' }).name;
+function save() { if (db) idbPut(db, 'state', JSON.stringify(state)).catch(e => { console.error(e); toast('Couldn’t save on this device.'); }); }
+let committing = false;
+function commit() { save(); committing = true; try { Sync.touch(); } finally { committing = false; } render(); }
+
+/* ---- sync: the same links on every device you sign in on (Firebase, the same account setup as Grocery and To-do).
+   What syncs: links, groups and their order. What stays on each device: Recent, the list/icon view, cached site icons. ---- */
+const C_GROUPS = 'linkGroups', C_LINKS = 'links';
+const syncModel = {
+  colls: [C_GROUPS, C_LINKS],
+  toEntities() {
+    return [...state.groups.map(g => ({ coll: C_GROUPS, id: g.id, data: { name: g.name, o: g.o } })),
+      ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, note: l.note, added: l.added, o: l.o } }))];
+  },
+  apply(out) {
+    const before = JSON.stringify([state.groups, state.links]);
+    const groups = [], gids = new Set();
+    for (const r of out[C_GROUPS] || []) { const g = normGroup({ ...r.data, id: r.id }); if (g && !gids.has(g.id)) { if (g.o == null) g.o = groups.length; gids.add(g.id); groups.push(g); } }
+    const old = new Map(state.links.map(l => [l.id, l])), links = [], seenId = new Set();
+    for (const r of out[C_LINKS] || []) {
+      const n = normLink({ ...r.data, id: r.id }, gids); if (!n || seenId.has(n.id)) continue; seenId.add(n.id);
+      const o = old.get(n.id);   /* keep this device's own bits: Recent and the cached icon */
+      if (o) { n.opened = o.opened; n.uses = o.uses; if (o.url === n.url) { n.icon = o.icon; n.iconAt = o.iconAt; } }
+      if (n.o == null) n.o = links.length;
+      links.push(n);
+    }
+    /* the same address added on two devices before they were signed in: keep the first one */
+    links.sort(byOrd); const urls = new Set();
+    state.groups = groups; state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort();
+    if (JSON.stringify([state.groups, state.links]) === before) return;
+    save(); renderIfSafe();
+  }
+};
+/* sync can change things at any moment: never redraw under an open dialog or while typing a search */
+let pendingRender = false;
+function renderIfSafe() {
+  if (committing) return;
+  const a = document.activeElement;
+  if ($('dialog[open]') || (a && a.id === 'q' && a.value)) { pendingRender = true; return; }
+  render();
+}
+document.addEventListener('close', () => { if (pendingRender) setTimeout(() => { if (!$('dialog[open]')) { pendingRender = false; render(); } }, 0); }, true);
+function ensureGroup(name) {
+  name = clampStr(name, 40); if (!name) return '';
+  const g = state.groups.find(x => x.name.toLowerCase() === name.toLowerCase());
+  if (g) return g.id;
+  if (state.groups.length >= MAX_GROUPS) return '';
+  const ng = { id: uid(), name, o: nextOrd(state.groups) }; state.groups.push(ng); return ng.id;
+}
+
+/* ---- render ---- */
+const view = $('#view');
+function linkHTML(l, mode) {
+  const open = `href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" data-open="${esc(l.id)}"`;
+  if (mode === 'icons' && !ui.edit) return `<a class="gi" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
+  const body = `${tileHTML(l)}<div class="main"><div class="nm">${esc(l.name)}${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</div><div class="host">${esc(l.note || shortUrl(l.url))}</div></div>`;
+  if (!ui.edit) return `<a class="lrow" ${open}>${body}</a>`;
+  return `<div class="lrow">${body}<div class="edit-tools"><button type="button" class="btn small" data-act="up" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} up">↑</button><button type="button" class="btn small" data-act="down" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} down">↓</button><button type="button" class="btn small" data-act="edit" data-id="${esc(l.id)}">Edit</button></div></div>`;
+}
+const block = (list, mode) => (mode === 'icons' && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
+function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + groupName(l.group) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
+function render() {
+  const mode = state.view, total = state.links.length;
+  $('#viewBtn').textContent = mode === 'icons' ? '☰' : '▦';
+  $('#viewBtn').setAttribute('aria-label', mode === 'icons' ? 'Show as a list' : 'Show as icons');
+  $('#editBtn').textContent = ui.edit ? 'Done' : 'Edit';
+  $('#sub').textContent = total ? `${total} link${total === 1 ? '' : 's'}` : '';
+  $('#syncSlot').innerHTML = syncBadgeHTML();
+  if (!total) {
+    view.innerHTML = `<div class="empty"><div class="big">🔗</div><h2>No links yet</h2><p>Tap <b>+</b> to add one, or bring in a list.</p>
+      ${Sync.status() === 'signed-out' ? '<p>Already have links on another device? Sign in to bring them here.</p><div class="foot"><button type="button" class="btn primary" data-action="sync-signin">Sign in</button></div>' : ''}
+      <div class="foot"><button type="button" class="btn${Sync.status() === 'signed-out' ? '' : ' primary'}" data-act="add">Add a link</button><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="restore">Restore a backup</button></div></div>`;
+    return;
+  }
+  const words = ui.q.toLowerCase().split(/\s+/).filter(Boolean);
+  let html = `<div class="search"><input id="q" type="search" placeholder="Search links" value="${esc(ui.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search links"></div>`;
+  if (words.length) {
+    const hits = state.links.filter(l => matches(l, words));
+    html += hits.length ? `<div class="sec-h"><span>Results</span><span>${hits.length}</span></div>${block(hits, mode)}` : '<div class="empty"><h2>No matches</h2></div>';
+    view.innerHTML = html; return;
+  }
+  if (!ui.edit) {
+    const favs = state.links.filter(l => l.fav);
+    if (favs.length) html += `<div class="sec-h"><span>Favorites</span></div>${block(favs, mode)}`;
+    const recent = state.links.filter(l => l.opened && !l.fav).sort((a, b) => b.opened - a.opened).slice(0, RECENT_N);
+    if (recent.length) html += `<div class="sec-h"><span>Recent</span></div>${block(recent, mode)}`;
+  }
+  const groups = [...state.groups.map(g => [g.id, g.name]), ['', 'Other']];
+  for (const [gid, gname] of groups) {
+    const list = state.links.filter(l => l.group === gid);
+    if (!list.length && !(ui.edit && gid)) continue;
+    const tools = ui.edit && gid ? `<span class="edit-tools"><button type="button" class="btn small" data-act="gup" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} up">↑</button><button type="button" class="btn small" data-act="gdown" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} down">↓</button><button type="button" class="btn small" data-act="gedit" data-g="${esc(gid)}">Rename</button></span>` : `<span>${list.length}</span>`;
+    html += `<div class="sec-h gh"><span class="grow">${esc(gname)}</span>${tools}</div>${list.length ? block(list, mode) : '<p class="hint" style="margin:0 4px">Empty group. Delete it from Rename.</p>'}`;
+  }
+  if (ui.edit) html += `<div class="foot"><button type="button" class="btn" data-act="gnew">New group</button></div>
+    <div class="sec-h"><span>Bring in and back up</span></div>
+    <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
+    <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links stay the same everywhere. Recent and the list/icon choice stay per device.')}
+    <p class="hint c">Links are also kept on this device and included in Goobs “Back up all apps.”</p>`;
+  else html += `<p class="hint c" style="margin-top:22px">Site icons: the site’s own icon, else DuckDuckGo’s icon service.</p>`;
+  view.innerHTML = html;
+}
+
+/* ---- add / edit ---- */
+function groupOptions() { return [...state.groups.map(g => [g.id, g.name]), ['', 'Other (no group)'], ['__new', 'New group…']]; }
+function linkDialog(l) {
+  const isNew = !l;
+  formDialog({
+    title: isNew ? 'Add a link' : 'Edit link',
+    fields: [
+      { name: 'url', label: 'Address', type: 'url', required: true, value: l ? l.url : '', placeholder: 'espn.com or paste a link', capitalize: 'none', autocomplete: 'off' },
+      { name: 'name', label: 'Name', value: l ? l.name : '', placeholder: 'Filled in from the address' },
+      { name: 'group', label: 'Group', type: 'select', value: l ? l.group : state.lastGroup, options: groupOptions() },
+      { name: 'newGroup', label: 'New group name', value: '', placeholder: 'Only if you picked New group…' },
+      { name: 'fav', label: '★ Favorite (shown at the top)', type: 'checkbox', value: l ? l.fav : false },
+      { name: 'emoji', label: 'Icon (optional emoji instead of the site icon)', value: l ? l.emoji : '', placeholder: 'e.g. 🎬' },
+      { name: 'note', label: 'Note (optional, shown under the name)', value: l ? l.note : '' }
+    ],
+    submitLabel: isNew ? 'Save' : 'Save',
+    extra: [{ label: 'Paste link', onClick: () => pasteInto() }],
+    onDelete: l ? async () => { removeLink(l); return true; } : null,
+    onSubmit: v => {
+      const url = linkUrl(v.url); if (!url) return 'Enter a web address, like espn.com or https://…';
+      const dup = state.links.find(x => x.url === url && x !== l); if (dup) return `That address is already saved as “${dup.name}”.`;
+      let group = v.group;
+      if (group === '__new') { group = ensureGroup(v.newGroup); if (!group) return 'Type a name for the new group.'; }
+      else if (v.newGroup.trim()) group = ensureGroup(v.newGroup);
+      const rec = { name: clampStr(v.name, 60) || autoName(url), url, group, emoji: clampStr(v.emoji, 16), note: clampStr(v.note, 300), fav: v.fav };
+      if (l) { if (l.url !== url) { l.icon = ''; l.iconAt = 0; } Object.assign(l, rec); }
+      else { if (state.links.length >= MAX_LINKS) return 'That’s the most links this app holds.'; state.links.push(normLink({ ...rec, id: uid(), added: Date.now(), o: nextOrd(state.links) }, new Set(state.groups.map(g => g.id)))); }
+      state.lastGroup = group; commit(); if (isNew) toast(`Added ${rec.name}`);
+    }
+  });
+  /* the name follows the address until you type your own */
+  const f = $('#dlg form'), nameEl = f.elements.name, urlEl = f.elements.url; let auto = isNew || nameEl.value === autoName(l.url);
+  nameEl.addEventListener('input', () => { auto = !nameEl.value.trim(); });
+  urlEl.addEventListener('input', () => { if (auto) { const u = linkUrl(urlEl.value); nameEl.value = u ? autoName(u) : ''; } });
+  const fieldOf = n => f.elements[n].closest('.field');
+  const grpSync = () => { fieldOf('newGroup').hidden = f.elements.group.value !== '__new'; if (!fieldOf('newGroup').hidden) f.elements.newGroup.focus(); };
+  f.elements.group.addEventListener('change', grpSync); fieldOf('newGroup').hidden = f.elements.group.value !== '__new';
+  const extras = [fieldOf('emoji'), fieldOf('note')], open = !!(l && (l.emoji || l.note));
+  if (!open) { extras.forEach(x => { x.hidden = true; }); fieldOf('note').insertAdjacentHTML('afterend', '<button type="button" class="btn small ghost more-btn" id="moreBtn">More options: icon, note</button>'); $('#moreBtn').onclick = () => { extras.forEach(x => { x.hidden = false; }); $('#moreBtn').remove(); }; }
+  $$('#dlg .emo-pick').forEach(x => x.remove());
+  const emoEl = f.elements.emoji;
+  emoEl.insertAdjacentHTML('afterend', `<div class="emo-pick" role="group" aria-label="Pick an icon">${EMOJIS.map(e => `<button type="button" data-e="${e}" aria-pressed="${emoEl.value === e}">${e}</button>`).join('')}</div>`);
+  $$('#dlg .emo-pick button').forEach(b => { b.onclick = () => { emoEl.value = emoEl.value === b.dataset.e ? '' : b.dataset.e; $$('#dlg .emo-pick button').forEach(x => x.setAttribute('aria-pressed', x.dataset.e === emoEl.value)); }; });
+}
+async function pasteInto() {
+  const f = $('#dlg form'); if (!f) return;
+  let t = '';
+  try { t = await navigator.clipboard.readText(); } catch { /* not allowed */ }
+  const m = str(t).match(/https?:\/\/[^\s<>"']+/i), u = linkUrl(m ? m[0] : t.trim());
+  if (!u) { $('.dlg-err', f).textContent = t ? 'The clipboard doesn’t hold a web address.' : 'Couldn’t read the clipboard. Tap the Address box and paste.'; return; }
+  f.elements.url.value = u; f.elements.url.dispatchEvent(new Event('input'));
+}
+function removeLink(l) {
+  const i = state.links.indexOf(l); if (i < 0) return;
+  state.links.splice(i, 1); commit();
+  toast(`Deleted ${l.name}`, { label: 'Undo', fn: () => { if (!linkById(l.id)) { state.links.push(l); resort(); } commit(); } });
+}
+function moveLink(id, dir) {
+  const l = linkById(id); if (!l) return;
+  const same = state.links.filter(x => x.group === l.group), k = same.indexOf(l), other = same[k + dir];
+  if (!other) return;
+  [l.o, other.o] = [other.o, l.o]; resort(); commit();
+}
+function moveGroup(id, dir) {
+  const i = state.groups.findIndex(g => g.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= state.groups.length) return;
+  const a = state.groups[i], b = state.groups[j]; [a.o, b.o] = [b.o, a.o]; resort(); commit();
+}
+function groupDialog(g) {
+  formDialog({
+    title: g ? 'Rename group' : 'New group',
+    fields: [{ name: 'name', label: 'Group name', required: true, value: g ? g.name : '' }],
+    onDelete: g ? async () => {
+      const n = state.links.filter(l => l.group === g.id).length;
+      if (n && !(await confirmBox(`Delete “${g.name}”?`, `Its ${n} link${n === 1 ? '' : 's'} move to Other. Nothing is deleted.`, 'Delete group'))) return false;
+      state.links.forEach(l => { if (l.group === g.id) l.group = ''; }); state.groups = state.groups.filter(x => x !== g); commit(); return true;
+    } : null,
+    deleteLabel: 'Delete group',
+    onSubmit: v => {
+      const name = clampStr(v.name, 40), clash = state.groups.find(x => x !== g && x.name.toLowerCase() === name.toLowerCase());
+      if (clash) return 'There’s already a group with that name.';
+      if (g) g.name = name; else { if (state.groups.length >= MAX_GROUPS) return 'That’s the most groups this app holds.'; state.groups.push({ id: uid(), name, o: nextOrd(state.groups) }); }
+      commit();
+    }
+  });
+}
+
+/* ---- bringing links in ---- */
+/* pasted list: "# Group" lines start a group; each other line is "Name | address" (optionally "| emoji"), "Name address" or just an address */
+function parseList(text) {
+  const out = []; let group = '';
+  for (const raw of str(text).split(/\r?\n/)) {
+    const line = raw.trim(); if (!line) continue;
+    const gm = line.match(/^#+\s*(.+)$/); if (gm) { group = gm[1].trim().slice(0, 40); continue; }
+    let name = '', addr = '', emoji = '';
+    if (line.includes('|')) { const p = line.split('|').map(x => x.trim()); name = p[0]; addr = p[1] || ''; emoji = p[2] || ''; }
+    else { const m = line.match(/^(.*?)\s*((?:https?:\/\/)?[^\s]+\.[^\s]+|https?:\/\/[^\s]+)$/i); if (m) { name = m[1].trim(); addr = m[2]; } else addr = line; }
+    const url = linkUrl(addr); if (url) out.push({ name: name.slice(0, 60), url, group, emoji: emoji.slice(0, 16) });
+  }
+  return out;
+}
+/* Safari (Mac): File > Export Bookmarks. Folders become groups. */
+function parseBookmarksHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html'), out = [];
+  for (const a of doc.querySelectorAll('a[href]')) {
+    const url = linkUrl(a.getAttribute('href')); if (!url) continue;
+    let dl = a.closest('dl'), group = '';
+    while (dl) { const dt = dl.previousElementSibling; const h = dt && (dt.matches('h3') ? dt : dt.querySelector && dt.querySelector('h3')); if (h) { group = h.textContent.trim(); break; } dl = dl.parentElement && dl.parentElement.closest('dl'); }
+    if (/^(favorites|bookmarks bar|bookmarksbar|bookmarks menu)$/i.test(group)) group = '';
+    out.push({ name: a.textContent.trim().slice(0, 60), url, group: group.slice(0, 40) });
+  }
+  return out;
+}
+function addMany(items) {
+  let added = 0, skipped = 0;
+  for (const it of items) {
+    if (state.links.length >= MAX_LINKS) break;
+    if (state.links.some(l => l.url === it.url)) { skipped++; continue; }
+    const group = it.group ? ensureGroup(it.group) : '';
+    state.links.push(normLink({ id: uid(), name: it.name || autoName(it.url), url: it.url, group, emoji: it.emoji || '', added: Date.now(), o: nextOrd(state.links) }, new Set(state.groups.map(g => g.id))));
+    added++;
+  }
+  commit();
+  toast(`Added ${added} link${added === 1 ? '' : 's'}${skipped ? ` · ${skipped} already saved` : ''}`);
+}
+function importTextDialog() {
+  formDialog({
+    title: 'Paste a list',
+    intro: 'One link per line: “Name | address”, optionally “| emoji” for the icon. A line starting with # starts a group. Links you already have are skipped.',
+    fields: [{ name: 'text', label: 'List', type: 'textarea', value: '', placeholder: '# Media\nRadarr | http://mediapc:7878/\n# Forums\nNP | https://www.tivocommunity.com/…' }],
+    submitLabel: 'Add these',
+    onSubmit: v => { const items = parseList(v.text); if (!items.length) return 'No web addresses found in that text.'; addMany(items); }
+  });
+  const ta = $('#dlg textarea'); if (ta) ta.classList.add('big');
+}
+async function importSafari() {
+  const f = await pickFile('.html,.htm,text/html'); if (!f) return;
+  const items = parseBookmarksHtml(await readFileText(f));
+  if (!items.length) { msgBox('No bookmarks found', 'That file has no bookmarks in it. In Safari on the Mac, use File › Export Bookmarks.'); return; }
+  if (await confirmBox(`Add ${items.length} bookmarks?`, 'Folders become groups. Ones you already have are skipped.', 'Add them', false)) addMany(items);
+}
+async function doBackup() {
+  const text = await Backup.build({ appId: APP_ID, schema: SCHEMA, data: state });
+  const r = await deliverFile(`links-backup-${todayISO()}.json`, text); if (r === 'downloaded') toast('Backup saved');
+}
+async function doRestore() {
+  const f = await pickFile(); if (!f) return;
+  try {
+    const r = await Backup.parse(await readFileText(f), { appId: APP_ID, schema: SCHEMA }); if (!r) return;
+    const s = normState(r.data);
+    if (!(await confirmBox('Replace your links?', `The backup has ${s.links.length} links. Your current ${state.links.length} will be replaced.`, 'Replace'))) return;
+    state = s; commit(); toast('Links restored');
+  } catch (e) { msgBox('Couldn’t restore', e.message); }
+}
+
+/* ---- events ---- */
+$('#addBtn').onclick = () => linkDialog(null);
+$('#viewBtn').onclick = () => { state.view = state.view === 'icons' ? 'list' : 'icons'; commit(); };
+$('#editBtn').onclick = () => { ui.edit = !ui.edit; render(); };
+document.addEventListener('click', e => { const s = e.target.closest('[data-action^="sync-"]'); if (s) { e.preventDefault(); syncAction(s.dataset.action); } });
+view.addEventListener('click', e => {
+  const open = e.target.closest('[data-open]');
+  if (open) { const l = linkById(open.dataset.open); if (l) { l.opened = Date.now(); l.uses++; save(); setTimeout(render, 300); } return; }
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const id = el.dataset.id, g = el.dataset.g;
+  switch (el.dataset.act) {
+    case 'add': linkDialog(null); break;
+    case 'edit': { const l = linkById(id); if (l) linkDialog(l); break; }
+    case 'up': moveLink(id, -1); break;
+    case 'down': moveLink(id, 1); break;
+    case 'gup': moveGroup(g, -1); break;
+    case 'gdown': moveGroup(g, 1); break;
+    case 'gedit': { const x = groupById(g); if (x) groupDialog(x); break; }
+    case 'gnew': groupDialog(null); break;
+    case 'import-text': importTextDialog(); break;
+    case 'import-safari': importSafari(); break;
+    case 'backup': doBackup(); break;
+    case 'restore': doRestore(); break;
+  }
+});
+view.addEventListener('input', e => {
+  if (e.target.id !== 'q') return;
+  ui.q = e.target.value; const pos = e.target.selectionStart; render();
+  const q = $('#q'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch { /* fine */ } }
+});
+
+(async function init() {
+  try { db = await openDB(DB_NAME); const raw = await idbGet(db, 'state'); if (raw) state = normState(JSON.parse(raw)); }
+  catch (e) { console.error(e); toast('This browser isn’t allowing storage, so links won’t be kept.'); }
+  Sync.onChange(() => renderIfSafe());
+  render();
+  Sync.start({ db, key: 'sync', model: syncModel }).catch(e => console.error(e));
+})();
+</script>
+</body>
+</html>
