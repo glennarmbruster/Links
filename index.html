@@ -221,14 +221,50 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 .emo-pick{display:flex;flex-wrap:wrap;gap:6px}
 .emo-pick button{font-size:22px;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer}
 .emo-pick button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
-/* Links / TV tabs */
 [hidden]{display:none!important}
-.apptabs{margin:12px 0 0}.apptabs .chip{font-size:15px}
+/* built-in Calendar tile: weekday and today's date */
+.ico.calico{background:#fff;color:#1b2420;flex-direction:column;display:flex;align-items:center;justify-content:center;gap:0;line-height:1;border:1px solid var(--line)}
+.ico.calico b{color:#e5484d;font-size:8.5px;letter-spacing:.04em;font-weight:800}.ico.calico span{font-size:19px;font-weight:600;margin-top:1px}
+.gi .ico.calico b{font-size:12px}.gi .ico.calico span{font-size:30px;margin-top:2px}
+#backBtn{font-size:26px;padding:0 8px 2px;min-width:36px;margin-right:-6px}
+/* Calendar */
+.calbar{display:flex;gap:10px;align-items:flex-end;margin:14px 0 10px}
+.calgo{flex:1;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+.calgo input{min-height:44px;border-radius:12px;background:var(--card);width:100%}
+.calcard{padding:8px 8px 10px}
+.calhead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px}.calhead h2{font-size:19px}.calhead .btn{font-size:24px;min-width:44px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;touch-action:pan-y}
+.calgrid .wd{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:2px 0 6px}
+.calgrid .day{position:relative;aspect-ratio:1/1;min-height:40px;border:0;background:none;color:var(--ink);font:inherit;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
+.calgrid .day .n{font-size:17px;font-weight:550;width:34px;height:34px;display:grid;place-items:center;border-radius:50%}
+.calgrid .day.we .n{color:var(--muted)}
+.calgrid .day.out{opacity:.35}
+.calgrid .day.fed .n{color:#e5484d;font-weight:700}
+.calgrid .day.today .n{background:var(--accent);color:var(--accent-ink);font-weight:800}
+.calgrid .day.sel{background:var(--accent-soft)}
+.calgrid .dots{position:absolute;bottom:3px;display:flex;gap:3px;height:5px}
+.calgrid .dots i{width:5px;height:5px;border-radius:50%;background:var(--muted)}.calgrid .dots i.f{background:#e5484d}.calgrid .dots i.e{background:var(--accent)}
+.calday{margin-top:12px;padding:14px}
+.calday-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.wdname{font-size:26px;font-weight:800;line-height:1.1}
+.calitem{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;text-align:left}
+.calday .calitem:first-of-type{border-top:0}
+button.calitem{cursor:pointer}
+.calitem .tag{flex:none;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.calitem .tag.f{background:#fde8e6;color:#b42318}.calitem .tag.e{background:var(--accent-soft);color:var(--accent);text-transform:none}
+.calnote{display:block;font-size:13px}
+.calnone{margin:4px 0 0}
+.calup{padding:0 14px}.calup .calitem:first-child{border-top:0}
+.calup .when{flex:none;width:96px;font-size:14px;font-weight:700;color:var(--muted)}
+.calup .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted);align-self:center}.calup .dot.f{background:#e5484d}.calup .dot.e{background:var(--accent)}
+.calopts{margin-top:14px}.chk{display:inline-flex;gap:8px;align-items:center;font-size:15px}
 /* TV */
 .tvbar{padding-bottom:6px}
 .tvdays{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0;-webkit-overflow-scrolling:touch}.tvdays::-webkit-scrollbar{display:none}
 .tvdays .chip{flex:none;white-space:nowrap;padding:6px 12px}
-.tvslots{margin-top:6px}.tvslots .chip{flex:1;min-height:32px;padding:4px 10px;font-size:13.5px}
+.tvslots{margin-top:6px}
+.netlist{display:flex;flex-direction:column;max-height:50vh;overflow:auto;margin-top:8px;border-top:1px solid var(--line)}
+.netpick{display:flex;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);font-size:16px}.netpick input{width:20px;height:20px}.tvslots .chip{flex:1;min-height:32px;padding:4px 10px;font-size:13.5px}
 .tvsearch{position:static;padding-top:6px}
 .tvfind{display:flex;gap:8px}.tvfind input{flex:1;min-width:0;border-radius:12px;background:var(--card)}
 .tvlist{padding:0}
@@ -249,7 +285,7 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 </head>
 <body>
 <div class="spooky" aria-hidden="true"><svg class="moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ffe9b0"/><circle cx="38" cy="40" r="7" fill="#f2d48c"/><circle cx="60" cy="62" r="9" fill="#f2d48c"/><circle cx="62" cy="34" r="4" fill="#f2d48c"/></svg><svg class="web" viewBox="0 0 100 100" fill="none" stroke="#e9dcff" stroke-width="1.2"><path d="M0 0L100 30M0 0L80 70M0 0L35 100M0 0L0 100M0 0L100 0"/><path d="M0 22Q12 14 22 0M0 44Q26 30 44 0M0 66Q40 46 66 0M0 88Q55 62 88 0"/></svg><div class="bat b1"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="bat b2"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="bat b3"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="pumpkins"><svg viewBox="0 0 400 70" preserveAspectRatio="xMidYMax meet"><g fill="#ff7a1a"><ellipse cx="60" cy="50" rx="30" ry="20"/><ellipse cx="46" cy="50" rx="14" ry="19" fill="#e96a10"/><ellipse cx="74" cy="50" rx="14" ry="19" fill="#e96a10"/><rect x="57" y="24" width="6" height="10" rx="2" fill="#4a7a2a"/><ellipse cx="340" cy="54" rx="24" ry="16"/><ellipse cx="329" cy="54" rx="11" ry="15" fill="#e96a10"/><ellipse cx="351" cy="54" rx="11" ry="15" fill="#e96a10"/><rect x="337" y="33" width="5" height="9" rx="2" fill="#4a7a2a"/></g><g fill="#2a1200"><path d="M48 44l6 6h-9zM66 44l6 6h-9zM46 58q14 8 28 0l-4 4-3-3-4 4-3-4-4 4-3-3z"/><path d="M332 49l5 5h-8zM345 49l5 5h-8zM330 60q10 6 20 0l-3 3-3-2-2 3-3-3-3 3z"/></g></svg></div></div>
-<header class="top"><div class="wrap"><div class="grow"><h1 id="title">Links</h1><div class="sub" id="sub"></div></div>
+<header class="top"><div class="wrap"><button type="button" class="btn small ghost hbtn" id="backBtn" hidden aria-label="Back to links">‹</button><div class="grow"><h1 id="title">Links</h1><div class="sub" id="sub"></div></div>
   <span id="syncSlot"></span><button type="button" class="btn small ghost hbtn" id="viewBtn" aria-label="Switch view"></button>
   <button type="button" class="btn small ghost" id="editBtn">Edit</button>
   <button type="button" class="btn small primary hbtn" id="addBtn" aria-label="Add a link">+</button>
@@ -831,9 +867,14 @@ const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a'
 const EMOJIS = ['🎬', '📺', '⬇️', '🗄️', '💻', '🖥️', '🇺🇸', '🩺', '💬', '🗳️', '📰', '🏈', '⚽', '🛒', '🏦', '✈️', '🍳', '🎵', '📷', '🏠', '🔧', '📈', '⭐', '🔗'];
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', tab: 'links', tv: { follow: [], slot: 'all' }, groups: [], links: [], lastGroup: '' });
+const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, groups: [], links: [], lastGroup: '' });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
-const linkUrl = u => { const s = safeUrl(u); return s && s.length <= 2000 ? s : ''; };
+/* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
+const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
+  calendar: { name: 'Calendar', emoji: '', sub: () => `Today is ${new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}` } };
+const appOf = url => { const m = /^app:(tv|calendar)$/.exec(str(url)); return m ? m[1] : ''; };
+const linkUrl = u => { if (appOf(u)) return u; const s = safeUrl(u); return s && s.length <= 2000 ? s : ''; };
+const route = () => { const h = location.hash.slice(1); return APPS[h] ? h : ''; };
 const ordOf = v => (isNum(v) ? v : null);
 function normGroup(g) { if (!g || typeof g !== 'object') return null; const name = clampStr(g.name, 40); return name ? { id: clampStr(g.id, 40) || uid(), name, o: ordOf(g.o) } : null; }
 function normLink(l, groupIds) {
@@ -847,6 +888,20 @@ function normLink(l, groupIds) {
     note: clampStr(l.note, 300), added: isNum(l.added) ? l.added : Date.now(), o: ordOf(l.o), a: ordOf(l.a), opened: isNum(l.opened) ? l.opened : 0, uses: isNum(l.uses) ? Math.max(0, Math.floor(l.uses)) : 0
   };
 }
+/* Built-in TV and Calendar are added to the list once per device (shown at the top until you put them in a group); delete them and they stay gone.
+   Fixed ids, so two devices adding them make one entry, not two. */
+function ensureBuiltins() {
+  let added = false; const keys = Object.keys(APPS), minA = state.links.reduce((m, x) => Math.min(m, x.a == null ? 0 : x.a), 0);
+  for (const k of keys) {
+    if (state.builtins.includes(k)) continue;
+    state.builtins.push(k);
+    if (state.links.some(l => appOf(l.url) === k)) continue;
+    state.links.push(normLink({ id: 'app-' + k, name: APPS[k].name, url: 'app:' + k, fav: false, added: Date.now(), o: nextOrd(state.links), a: minA - keys.length + keys.indexOf(k) }, new Set(state.groups.map(g => g.id))));
+    added = true;
+  }
+  if (added) { resort(); commit(); } else save();
+}
+function addBuiltin(k) { state.builtins = state.builtins.filter(x => x !== k); ensureBuiltins(); toast(`Added ${APPS[k].name}`); }
 /* TV shows followed on this device: [{ id (TVMaze show id), name, net }] */
 function normFollow(tv) {
   const seen = new Set(), list = tv && Array.isArray(tv.follow) ? tv.follow : [];
@@ -860,7 +915,8 @@ function normState(s) {
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
   const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : /^cols/.test(str(s.view)) ? 'all' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
-    tab: s.tab === 'tv' ? 'tv' : 'links', tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all' } };
+    builtins: (Array.isArray(s.builtins) ? s.builtins : []).filter(k => APPS[k]), cal: normCal(s.cal), tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all',
+      by: s.tv && s.tv.by === 'net' ? 'net' : 'time', nets: s.tv && Array.isArray(s.tv.nets) ? [...new Set(s.tv.nets.filter(n => typeof n === 'string').map(n => clampStr(n, 40)).filter(Boolean))].slice(0, 60) : ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] } };
   resort(out); fillAllOrder(out); return out;
 }
 /* "All icons" has its own order (a), set by dragging there; links without one follow the grouped order */
@@ -889,6 +945,7 @@ function shortUrl(url) {
 }
 /* a readable name from the address: espn.com -> ESPN, va.gov -> VA, mediapc:7878 -> Mediapc 7878 */
 function autoName(url) {
+  if (appOf(url)) return APPS[appOf(url)].name;
   let u; try { u = new URL(url); } catch { return 'Link'; }
   const h = u.hostname.replace(/^www\./, '');
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(h)) return h + (u.port ? ':' + u.port : '');
@@ -910,6 +967,8 @@ function iconCandidates(l) {
   return l.icon && l.icon !== 'none' ? [l.icon, ...list.filter(x => x !== l.icon)] : list;
 }
 function tileHTML(l) {
+  if (appOf(l.url) === 'calendar' && !l.emoji) { const d = new Date(); return `<span class="ico calico" aria-hidden="true"><b>${esc(d.toLocaleDateString([], { weekday: 'short' }).toUpperCase())}</b><span>${d.getDate()}</span></span>`; }
+  if (appOf(l.url) && !l.emoji) return `<span class="ico emo" aria-hidden="true">${APPS[appOf(l.url)].emoji}</span>`;
   if (l.emoji) return `<span class="ico emo" aria-hidden="true">${esc(l.emoji)}</span>`;
   const c = iconCandidates(l), ini = initials(l.name), letter = `style="background:${colorOf(l.name)}"`;
   if (!c.length) return `<span class="ico${ini.length > 2 ? ' l3' : ''}" ${letter} aria-hidden="true">${esc(ini)}</span>`;
@@ -992,39 +1051,42 @@ function ensureGroup(name) {
 /* ---- render ---- */
 const view = $('#view');
 function linkHTML(l, mode) {
-  const open = `href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" data-open="${esc(l.id)}"`;
+  const app = appOf(l.url), open = app ? `href="#${app}" data-open="${esc(l.id)}"` : `href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" data-open="${esc(l.id)}"`;
   if ((mode === 'icons' || mode === 'all') && !ui.edit) return `<a class="gi" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
-  const body = `${tileHTML(l)}<div class="main"><div class="nm">${esc(l.name)}${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</div><div class="host">${esc(l.note || shortUrl(l.url))}</div></div>`;
+  const body = `${tileHTML(l)}<div class="main"><div class="nm">${esc(l.name)}${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</div><div class="host">${esc(l.note || (app ? APPS[app].sub() : shortUrl(l.url)))}</div></div>`;
   if (!ui.edit) return `<a class="lrow" ${open}>${body}</a>`;
   return `<div class="lrow">${body}<div class="edit-tools"><button type="button" class="btn small" data-act="up" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} up">↑</button><button type="button" class="btn small" data-act="down" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} down">↓</button><button type="button" class="btn small" data-act="edit" data-id="${esc(l.id)}">Edit</button></div></div>`;
 }
 const block = (list, mode) => ((mode === 'icons' || mode === 'all') && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
 function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + groupName(l.group) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
-const tabsHTML = () => `<div class="seg apptabs" role="tablist"><button type="button" class="chip" role="tab" data-tab="links" aria-pressed="${state.tab !== 'tv'}">🔗 Links</button><button type="button" class="chip" role="tab" data-tab="tv" aria-pressed="${state.tab === 'tv'}">📺 TV</button></div>`;
 function render() {
   applyTheme();
-  const tvMode = state.tab === 'tv';
-  $('#title').textContent = tvMode ? 'TV' : 'Links';
-  $('#editBtn').hidden = $('#addBtn').hidden = tvMode;
-  if (tvMode) {
+  const app = route();
+  $('#editBtn').hidden = $('#addBtn').hidden = !!app; $('#backBtn').hidden = !app; $('#syncSlot').hidden = !!app;
+  if (app) {
+    const l = state.links.find(x => appOf(x.url) === app);
+    $('#title').textContent = l ? l.name : APPS[app].name;
     $('#viewBtn').textContent = '🎨'; $('#viewBtn').setAttribute('aria-label', 'Theme');
-    $('#sub').textContent = 'New and live episodes'; $('#syncSlot').innerHTML = syncBadgeHTML();
-    renderTV(); return;
+    $('#sub').textContent = app === 'tv' ? 'New and live episodes' : '';
+    if (app === 'tv') renderTV(); else renderCalendar();
+    return;
   }
-  const mode = state.view, total = state.links.length;
+  $('#title').textContent = 'Links';
+  const mode = state.view, total = state.links.filter(l => !appOf(l.url)).length;   /* TV and Calendar don't count */
   const vw = VIEWS.find(v => v[0] === mode) || VIEWS[0];
   $('#viewBtn').textContent = vw[2]; $('#viewBtn').setAttribute('aria-label', `View: ${vw[1]}. Change view`);
   $('#editBtn').textContent = ui.edit ? 'Done' : 'Edit';
   $('#sub').textContent = total ? `${total} link${total === 1 ? '' : 's'}` : '';
   $('#syncSlot').innerHTML = syncBadgeHTML();
-  if (!total) {
-    view.innerHTML = tabsHTML() + `<div class="empty"><div class="big">🔗</div><h2>No links yet</h2><p>Tap <b>+</b> to add one, or bring in a list.</p>
+  if (!total && !ui.edit) {
+    const apps = state.links.filter(l => appOf(l.url));
+    view.innerHTML = (apps.length ? block(apps, mode === 'all' ? 'icons' : mode) : '') + `<div class="empty"><div class="big">🔗</div><h2>No links yet</h2><p>Tap <b>+</b> to add one, or bring in a list.</p>
       ${Sync.status() === 'signed-out' ? '<p>Already have links on another device? Sign in to bring them here.</p><div class="foot"><button type="button" class="btn primary" data-action="sync-signin">Sign in</button></div>' : ''}
       <div class="foot"><button type="button" class="btn${Sync.status() === 'signed-out' ? '' : ' primary'}" data-act="add">Add a link</button><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="restore">Restore a backup</button></div></div>`;
     return;
   }
   const words = ui.q.toLowerCase().split(/\s+/).filter(Boolean);
-  let html = tabsHTML() + `<div class="search"><input id="q" type="search" placeholder="Search links" value="${esc(ui.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search links"></div>`;
+  let html = `<div class="search"><input id="q" type="search" placeholder="Search links" value="${esc(ui.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search links"></div>`;
   if (words.length) {
     const hits = state.links.filter(l => matches(l, words));
     html += hits.length ? `<div class="sec-h"><span>Results</span><span>${hits.length}</span></div>${block(hits, mode)}` : '<div class="empty"><h2>No matches</h2></div>';
@@ -1038,15 +1100,17 @@ function render() {
     else html += `<p class="hint c" style="margin-top:22px">Site icons: the site’s own icon, else DuckDuckGo’s icon service.</p>`;
     view.innerHTML = html; return;
   }
+  const tools = state.links.filter(l => appOf(l.url) && !l.group);   /* ungrouped TV / Calendar sit at the top */
+  if (tools.length && !ui.edit) html += block(tools, mode);
   if (!ui.edit) {
     const favs = state.links.filter(l => l.fav);
     if (favs.length) html += `<div class="sec-h"><span>Favorites</span></div>${block(favs, mode)}`;
-    const recent = state.links.filter(l => l.opened && !l.fav).sort((a, b) => b.opened - a.opened).slice(0, RECENT_N);
+    const recent = state.links.filter(l => l.opened && !l.fav && !appOf(l.url)).sort((a, b) => b.opened - a.opened).slice(0, RECENT_N);
     if (recent.length) html += `<div class="sec-h"><span>Recent</span></div>${block(recent, mode)}`;
   }
   const groups = [...state.groups.map(g => [g.id, g.name]), ['', 'Other']];
   for (const [gid, gname] of groups) {
-    const list = state.links.filter(l => l.group === gid);
+    const list = state.links.filter(l => l.group === gid && (gid || ui.edit || !appOf(l.url)));
     if (!list.length && !(ui.edit && gid)) continue;
     const tools = ui.edit && gid ? `<span class="edit-tools"><button type="button" class="btn small" data-act="gup" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} up">↑</button><button type="button" class="btn small" data-act="gdown" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} down">↓</button><button type="button" class="btn small" data-act="gedit" data-g="${esc(gid)}">Rename</button></span>` : `<span>${list.length}</span>`;
     html += `<div class="sec-h gh"><span class="grow">${esc(gname)}</span>${tools}</div>${list.length ? block(list, mode) : '<p class="hint" style="margin:0 4px">Empty group. Delete it from Rename.</p>'}`;
@@ -1056,7 +1120,9 @@ function render() {
   view.innerHTML = html;
 }
 function toolsHTML(groups) {
+  const missing = Object.keys(APPS).filter(k => !state.links.some(l => appOf(l.url) === k));
   return `${groups ? '<div class="foot"><button type="button" class="btn" data-act="gnew">New group</button></div>' : ''}
+    ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${k === 'tv' ? '📺' : '📅'} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
     <div class="sec-h"><span>Bring in and back up</span></div>
     <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
     <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links stay the same everywhere. Recent and the view you pick stay per device.')}
@@ -1098,6 +1164,7 @@ function linkDialog(l) {
   nameEl.addEventListener('input', () => { auto = !nameEl.value.trim(); });
   urlEl.addEventListener('input', () => { if (auto) { const u = linkUrl(urlEl.value); nameEl.value = u ? autoName(u) : ''; } });
   const fieldOf = n => f.elements[n].closest('.field');
+  if (l && appOf(l.url)) { fieldOf('url').hidden = true; $$('#dlg [data-x]').forEach(b => { b.hidden = true; }); $('#dlg h2').textContent = `Edit ${APPS[appOf(l.url)].name} (built in)`; }
   const grpSync = () => { fieldOf('newGroup').hidden = f.elements.group.value !== '__new'; if (!fieldOf('newGroup').hidden) f.elements.newGroup.focus(); };
   f.elements.group.addEventListener('change', grpSync); fieldOf('newGroup').hidden = f.elements.group.value !== '__new';
   const extras = [fieldOf('emoji'), fieldOf('note')], open = !!(l && (l.emoji || l.note));
@@ -1255,15 +1322,18 @@ view.addEventListener('contextmenu', e => { if (e.target.closest('#allGrid')) e.
 
 $('#addBtn').onclick = () => linkDialog(null);
 $('#viewBtn').onclick = async () => {
-  if (state.tab === 'tv') { await askDialog({ title: 'Theme', body: `<p class="muted">Each device keeps its own theme.</p>${themesHTML()}`, buttons: [{ label: 'Done', value: null, kind: 'primary' }] }); return; }
+  if (route()) { await askDialog({ title: 'Theme', body: `<p class="muted">Each device keeps its own theme.</p>${themesHTML()}`, buttons: [{ label: 'Done', value: null, kind: 'primary' }] }); return; }
   const v = await askDialog({ title: 'View and theme', body: `<p class="muted">Each device keeps its own choice of view and theme.</p><h3>Theme</h3>${themesHTML()}<h3>View</h3>`, buttons: [...VIEWS.map(([k, label, sym]) => ({ label: `${sym}  ${label}${k === state.view ? '  ✓' : ''}`, value: k, kind: k === state.view ? 'primary' : '' })), { label: 'Cancel', value: null, kind: 'ghost' }] });
   if (v && v !== state.view) { state.view = v; save(); render(); }
 };
 $('#editBtn').onclick = () => { ui.edit = !ui.edit; render(); };
+/* TV and Calendar are #tv and #calendar, so the phone's back swipe works too */
+$('#backBtn').onclick = () => { if (ui.fromLinks) history.back(); else { history.replaceState(null, '', location.pathname + location.search); render(); } };
+window.addEventListener('hashchange', () => { if (!route()) ui.fromLinks = false; ui.edit = false; render(); window.scrollTo(0, 0); });
 document.addEventListener('click', e => { const s = e.target.closest('[data-action^="sync-"]'); if (s) { e.preventDefault(); syncAction(s.dataset.action); } });
 view.addEventListener('click', e => {
   const open = e.target.closest('[data-open]');
-  if (open) { const l = linkById(open.dataset.open); if (l) { l.opened = Date.now(); l.uses++; save(); setTimeout(render, 300); } return; }
+  if (open) { const l = linkById(open.dataset.open); if (l) { l.opened = Date.now(); l.uses++; save(); if (appOf(l.url)) { ui.fromLinks = true; window.scrollTo(0, 0); } else setTimeout(render, 300); } return; }
   const el = e.target.closest('[data-act]'); if (!el) return;
   const id = el.dataset.id, g = el.dataset.g;
   switch (el.dataset.act) {
@@ -1275,6 +1345,7 @@ view.addEventListener('click', e => {
     case 'gdown': moveGroup(g, 1); break;
     case 'gedit': { const x = groupById(g); if (x) groupDialog(x); break; }
     case 'gnew': groupDialog(null); break;
+    case 'builtin': addBuiltin(el.dataset.k); break;
     case 'import-text': importTextDialog(); break;
     case 'import-safari': importSafari(); break;
     case 'backup': doBackup(); break;
@@ -1353,7 +1424,7 @@ async function tvLoadDay(off, force) {
   try { await Promise.all([etDate(start, -1), etDate(start), etDate(start, 1)].map(d => tvLoadDate(d, force))); }
   catch (e) { console.warn(e); if (!tvHaveDay(off)) tvUi.errDay = off, tvUi.err = navigator.onLine ? 'TVMaze didn’t answer. Try again in a minute.' : 'You’re offline, and this day isn’t saved on this device yet.'; }
   finally { tvLoading.delete(key); }
-  if (state.tab === 'tv') renderIfSafe();
+  if (route() === 'tv') renderIfSafe();
   tvTidyCache();
 }
 const tvHaveDay = off => { const s = tvDayStart(off); return [etDate(s), etDate(s, 1)].every(d => tvMem.has(d)); };
@@ -1386,7 +1457,7 @@ async function tvLoadShowInfo(force) {
       const s = await tvFetchJSON(`${TVM}/shows/${f.id}?embed[]=nextepisode&embed[]=previousepisode`), em = s._embedded || {};
       tvShowInfo[f.id] = { at: Date.now(), status: str(s.status), net: str((s.network || s.webChannel || {}).name),
         next: em.nextepisode ? slimEp(em.nextepisode, s) : null, prev: em.previousepisode ? slimEp(em.previousepisode, s) : null };
-      if (state.tab === 'tv' && tvUi.my) renderIfSafe();
+      if (route() === 'tv' && tvUi.my) renderIfSafe();
       await new Promise(r => setTimeout(r, 450));   // TVMaze allows about 20 calls per 10 seconds
     } catch (e) { console.warn(e); break; }
   }
@@ -1455,9 +1526,31 @@ function inSlot(x, slot) {
 }
 const tvSlotChips = (off, slot) => `<div class="tvdays tvslots">${SLOTS.filter(([k]) => k !== 'now' || off === 0).map(([k, label]) =>
   `<button type="button" class="chip" data-tv="slot" data-slot="${k}" aria-pressed="${slot === k}">${esc(label)}</button>`).join('')}</div>`;
+/* Network view: only the channels you pick, one section each, in your order */
+const TV_DEFAULT_NETS = ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'];
+const byNet = () => state.tv.by === 'net';
+const sameNet = (a, b) => a.toLowerCase() === b.toLowerCase();
+const tvByChips = () => `<div class="tvdays tvslots"><button type="button" class="chip" data-tv="by" data-by="time" aria-pressed="${!byNet()}">By time</button><button type="button" class="chip" data-tv="by" data-by="net" aria-pressed="${byNet()}">By network</button>${byNet() ? `<button type="button" class="chip" data-tv="nets">Channels (${state.tv.nets.length})</button>` : ''}</div>`;
+async function pickNets() {
+  const seen = new Map();
+  for (const hit of tvMem.values()) for (const x of hit.items) if (x.net && !seen.has(x.net.toLowerCase())) seen.set(x.net.toLowerCase(), { name: x.net, web: x.web });
+  for (const n of state.tv.nets.concat(TV_DEFAULT_NETS)) if (!seen.has(n.toLowerCase())) seen.set(n.toLowerCase(), { name: n, web: false });
+  const all = [...seen.values()], on = n => state.tv.nets.some(x => sameNet(x, n));
+  const chosen = state.tv.nets.map(n => all.find(x => sameNet(x.name, n))).filter(Boolean);
+  const rest = all.filter(x => !on(x.name)).sort((a, b) => a.web - b.web || a.name.localeCompare(b.name));
+  const row = x => `<label class="netpick"><input type="checkbox" value="${esc(x.name)}"${on(x.name) ? ' checked' : ''}> ${esc(x.name)}${x.web ? ' <span class="muted">(streaming)</span>' : ''}</label>`;
+  const ok = await askDialog({ title: 'Channels to show', body: `<p class="muted">Network view shows these, in this order. Channels from the listings you’ve opened are here; open other days to see more.</p><div class="netlist">${chosen.map(row).join('')}${rest.map(row).join('')}</div>`,
+    buttons: [{ label: 'Cancel', value: false }, { label: 'Defaults', value: 'def' }, { label: 'Save', value: true, kind: 'primary' }] });
+  if (ok === 'def') state.tv.nets = TV_DEFAULT_NETS.slice();
+  else if (ok === true) {
+    const picked = $$('#ask .netlist input:checked').map(i => i.value);
+    state.tv.nets = state.tv.nets.filter(n => picked.some(p => sameNet(p, n))).concat(picked.filter(p => !state.tv.nets.some(n => sameNet(n, p))));
+  } else return;
+  save(); render();
+}
 function renderTV() {
   const off = tvUi.day, slot = tvSlot();
-  let html = tabsHTML() + `<div class="search tvbar">${tvDayChips()}${tvUi.my ? '' : tvSlotChips(off, slot)}</div>`;
+  let html = `<div class="search tvbar">${tvDayChips()}${tvUi.my ? '' : tvSlotChips(off, slot) + tvByChips()}</div>`;
   if (tvUi.my) { view.innerHTML = html + tvMyShowsHTML(); return; }
   if (!tvHaveDay(off)) {
     const failed = tvUi.errDay === off && tvUi.err;
@@ -1480,6 +1573,15 @@ function renderTV() {
   const mine = all.filter(x => followed(x.sid));
   if (mine.length && !words.length) html += `<div class="sec-h"><span>Your shows ${off === 0 ? 'today' : off === 1 ? 'tomorrow' : 'this day'}</span><span>${mine.length}</span></div><div class="card tvlist">${mine.map(x => tvRow(x)).join('')}</div>`;
   if (hidden) html += `<div class="foot"><button type="button" class="btn small" data-tv="earlier">Show earlier today (${hidden})</button></div>`;
+  if (byNet()) {
+    const pool = list.concat(web);
+    if (!state.tv.nets.length) html += '<div class="empty"><p>Pick the channels to show.</p><div class="foot"><button type="button" class="btn primary" data-tv="nets">Pick channels</button></div></div>';
+    for (const n of state.tv.nets) {
+      const items = pool.filter(x => sameNet(x.net, n));
+      html += `<div class="sec-h"><span>${esc(n)}</span><span>${items.length || ''}</span></div>${items.length ? `<div class="card tvlist">${items.map(x => tvRow(x)).join('')}</div>` : `<p class="hint" style="margin:0 4px">Nothing new or live listed${slot === 'prime' ? ' in prime time' : slot === 'now' ? ' right now' : ''}.</p>`}`;
+    }
+    view.innerHTML = html + tvFootHTML(off, hit); return;
+  }
   let lastHour = '';
   if (!list.length && !web.length) html += `<div class="empty"><h2>${words.length ? 'No matches' : slot === 'now' ? 'Nothing new or live right now' : slot === 'prime' ? 'Nothing listed in prime time' : 'Nothing listed'}</h2></div>`;
   let open = false;
@@ -1490,10 +1592,12 @@ function renderTV() {
   }
   if (open) html += '</div>';
   if (web.length) html += `<div class="sec-h"><span>Streaming</span><span>${web.length}</span></div><div class="card tvlist">${web.map(x => tvRow(x)).join('')}</div>`;
+  view.innerHTML = html + tvFootHTML(off, hit);
+}
+function tvFootHTML(off, hit) {
   const zone = new Intl.DateTimeFormat([], { timeZoneName: 'short' }).formatToParts(new Date()).find(p => p.type === 'timeZoneName');
-  html += `<p class="hint c" style="margin-top:22px">${esc(fmtDay(tvDayStart(off), true))} · times in ${esc(zone ? zone.value : 'your time zone')}.<br>New and live episodes from <a href="https://www.tvmaze.com/" target="_blank" rel="noopener">TVMaze</a>; no reruns or movies.
+  return `<p class="hint c" style="margin-top:22px">${esc(fmtDay(tvDayStart(off), true))} · times in ${esc(zone ? zone.value : 'your time zone')}.<br>New and live episodes from <a href="https://www.tvmaze.com/" target="_blank" rel="noopener">TVMaze</a>; no reruns or movies.
     ${hit ? `Updated ${esc(fmtTime(hit.at))}.` : ''}</p><div class="foot"><button type="button" class="btn small ghost" data-tv="refresh">Refresh</button></div>`;
-  view.innerHTML = html;
 }
 function tvMyShowsHTML() {
   if (!tvShowInfoLoaded || state.tv.follow.some(f => !tvShowInfo[f.id])) tvLoadShowInfo();
@@ -1520,8 +1624,6 @@ function tvMyShowsHTML() {
 
 /* ---------- taps ---------- */
 view.addEventListener('click', e => {
-  const tab = e.target.closest('[data-tab]');
-  if (tab) { state.tab = tab.dataset.tab; ui.edit = false; save(); render(); window.scrollTo(0, 0); return; }
   const el = e.target.closest('[data-tv]'); if (!el) return;
   switch (el.dataset.tv) {
     case 'day': tvUi.my = false; tvUi.day = +el.dataset.day; tvUi.open = ''; tvUi.earlier = false; tvUi.errDay = null; render(); window.scrollTo(0, 0); break;
@@ -1531,6 +1633,8 @@ view.addEventListener('click', e => {
     case 'followid': { const sid = +el.dataset.sid, f = state.tv.follow.find(v => v.id === sid), r = (tvUi.found || []).find(v => v.sid === sid);
       tvFollow(f ? { sid, show: f.name, net: f.net } : r); break; }
     case 'earlier': tvUi.earlier = true; render(); break;
+    case 'by': state.tv.by = el.dataset.by; if (byNet() && !state.tv.nets.length) state.tv.nets = TV_DEFAULT_NETS.slice(); save(); render(); window.scrollTo(0, 0); break;
+    case 'nets': pickNets(); break;
     case 'slot': state.tv.slot = el.dataset.slot; save(); tvUi.open = ''; render(); window.scrollTo(0, 0); break;
     case 'refresh': tvUi.errDay = null; for (let d = -1; d <= 1; d++) tvMem.delete(etDate(tvDayStart(tvUi.day), d)); tvLoadDay(tvUi.day, true); render(); break;
     case 'refreshmine': tvLoadShowInfo(true); toast('Checking your shows…'); break;
@@ -1545,15 +1649,176 @@ view.addEventListener('input', e => {
   const q = $('#tq'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch { /* fine */ } }
 });
 /* back online, or a new day while the app stayed open */
-window.addEventListener('online', () => { if (state.tab === 'tv') { tvUi.errDay = null; renderIfSafe(); } });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && state.tab === 'tv') renderIfSafe(); });
+window.addEventListener('online', () => { if (route() === 'tv') { tvUi.errDay = null; renderIfSafe(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && route() === 'tv') renderIfSafe(); });
+
+/* ===================== Calendar: see what day any date falls on; US holidays; your own events ===================== */
+/* Everything is worked out on the device (no service). Your events stay on this device and go into this app's backup. */
+const pad2 = n => String(n).padStart(2, '0');
+const isoOf = (y, m, d) => `${y}-${pad2(m + 1)}-${pad2(d)}`;          // m is 0-11
+const isoDate = d => isoOf(d.getFullYear(), d.getMonth(), d.getDate());
+const parseIso = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str(s)); if (!m) return null; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getMonth() === +m[2] - 1 ? d : null; };
+const todayIso = () => isoDate(new Date());
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const WD = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/* ---- US holidays ---- */
+const nthWeekday = (y, m, wd, n) => { const first = new Date(y, m, 1).getDay(); return 1 + ((wd - first + 7) % 7) + (n - 1) * 7; };
+const lastWeekday = (y, m, wd) => { const last = new Date(y, m + 1, 0); return last.getDate() - ((last.getDay() - wd + 7) % 7); };
+function easter(y) {   // Western (Gregorian) Easter, anonymous algorithm
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
+    h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+    mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1;
+  return [mo - 1, da];
+}
+const holCache = new Map();
+/* { 'YYYY-MM-DD': [{ name, fed }] } for one year; fed = federal holiday (most offices, banks and mail closed) */
+function holidaysFor(y) {
+  if (holCache.has(y)) return holCache.get(y);
+  const out = {}, add = (m, d, name, fed) => { const k = isoOf(y, m, d); (out[k] = out[k] || []).push({ name, fed }); };
+  const fixed = [[0, 1, 'New Year’s Day'], [5, 19, 'Juneteenth'], [6, 4, 'Independence Day'], [10, 11, 'Veterans Day'], [11, 25, 'Christmas Day']];
+  for (const [m, d, name] of fixed) {
+    add(m, d, name, true);
+    const wd = new Date(y, m, d).getDay();   // on a weekend, the day off is the Friday before or the Monday after
+    if (wd === 6 && !(m === 0 && d === 1)) add(m, d - 1, `${name} (observed)`, true);
+    if (wd === 0) add(m, d + 1, `${name} (observed)`, true);
+  }
+  if (new Date(y + 1, 0, 1).getDay() === 6) add(11, 31, 'New Year’s Day (observed)', true);
+  add(0, nthWeekday(y, 0, 1, 3), 'Martin Luther King Jr. Day', true);
+  add(1, nthWeekday(y, 1, 1, 3), 'Presidents’ Day', true);
+  add(4, lastWeekday(y, 4, 1), 'Memorial Day', true);
+  add(8, nthWeekday(y, 8, 1, 1), 'Labor Day', true);
+  add(9, nthWeekday(y, 9, 1, 2), 'Columbus Day', true);
+  add(10, nthWeekday(y, 10, 4, 4), 'Thanksgiving', true);
+  // other days most calendars show
+  add(1, 2, 'Groundhog Day', false); add(1, 14, 'Valentine’s Day', false); add(2, 17, 'St. Patrick’s Day', false);
+  const [em, ed] = easter(y); add(em, ed, 'Easter', false);
+  add(4, nthWeekday(y, 4, 0, 2), 'Mother’s Day', false); add(5, nthWeekday(y, 5, 0, 3), 'Father’s Day', false);
+  add(9, 31, 'Halloween', false); add(11, 24, 'Christmas Eve', false); add(11, 31, 'New Year’s Eve', false);
+  add(2, nthWeekday(y, 2, 0, 2), 'Daylight saving time starts', false); add(10, nthWeekday(y, 10, 0, 1), 'Daylight saving time ends', false);
+  if (y % 2 === 0) add(10, nthWeekday(y, 10, 1, 1) + 1, 'Election Day', false);
+  add(10, nthWeekday(y, 10, 4, 4) + 1, 'Black Friday', false);
+  holCache.set(y, out); return out;
+}
+const holidaysOn = iso => (state.cal.holidays ? holidaysFor(+iso.slice(0, 4))[iso] || [] : []);
+
+/* ---- your events ---- */
+function normCal(c) {
+  c = c && typeof c === 'object' ? c : {};
+  const seen = new Set();
+  const events = (Array.isArray(c.events) ? c.events : []).map(e => e && typeof e === 'object' && parseIso(e.date) ? {
+    id: clampStr(e.id, 40) || uid(), title: clampStr(e.title, 80) || 'Event', date: str(e.date),
+    time: /^\d{2}:\d{2}$/.test(str(e.time)) ? e.time : '', yearly: !!e.yearly, note: clampStr(e.note, 300) } : null)
+    .filter(e => e && !seen.has(e.id) && seen.add(e.id)).slice(0, 2000);
+  return { events, holidays: c.holidays !== false };
+}
+/* events that fall on a date (a yearly one shows every year from its first date on; Feb 29 shows on Feb 28 in other years) */
+function eventsOn(iso) {
+  const y = +iso.slice(0, 4), md = iso.slice(5), leap = new Date(y, 1, 29).getMonth() === 1;
+  return state.cal.events.filter(e => e.date === iso || (e.yearly && e.date <= iso && (e.date.slice(5) === md || (!leap && e.date.slice(5) === '02-29' && md === '02-28'))))
+    .sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.title.localeCompare(b.title));
+}
+const fmtClock = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return new Date(2000, 0, 1, h, m).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); };
+const yearsSince = (e, iso) => (e.yearly ? +iso.slice(0, 4) - +e.date.slice(0, 4) : 0);
+
+/* ---- screen ---- */
+const calUi = { y: 0, m: 0, sel: '' };
+function calGo(iso) { const d = parseIso(iso); if (!d) return; calUi.y = d.getFullYear(); calUi.m = d.getMonth(); calUi.sel = iso; }
+function calShift(n) { const d = new Date(calUi.y, calUi.m + n, 1); calUi.y = d.getFullYear(); calUi.m = d.getMonth(); }
+function relDays(iso) {
+  const n = Math.round((parseIso(iso) - parseIso(todayIso())) / 864e5);
+  if (n === 0) return 'Today'; if (n === 1) return 'Tomorrow'; if (n === -1) return 'Yesterday';
+  const abs = Math.abs(n), w = abs >= 14 ? ` (${abs % 7 ? 'about ' : ''}${Math.round(abs / 7)} weeks)` : '';
+  return n > 0 ? `In ${abs.toLocaleString()} days${w}` : `${abs.toLocaleString()} days ago${w}`;
+}
+function renderCalendar() {
+  if (!calUi.sel) calGo(todayIso());
+  const { y, m } = calUi, today = todayIso(), first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  let html = `<div class="calbar"><label class="calgo"><span>Look up a date</span><input id="cgo" type="date" value="${esc(calUi.sel)}" aria-label="Look up a date"></label>
+    <button type="button" class="btn small" data-cal="today">Today</button></div>
+    <div class="card calcard"><div class="calhead"><button type="button" class="btn small ghost" data-cal="prev" aria-label="Previous month">‹</button>
+    <h2>${MONTHS[m]} ${y}</h2><button type="button" class="btn small ghost" data-cal="next" aria-label="Next month">›</button></div>
+    <div class="calgrid" id="calgrid">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => `<span class="wd" aria-label="${WD[i]}">${d}</span>`).join('')}`;
+  const cells = Math.ceil((first + days) / 7) * 7;
+  for (let i = 0; i < cells; i++) {
+    const d = new Date(y, m, 1 - first + i), iso = isoDate(d), out = d.getMonth() !== m;
+    const hol = holidaysOn(iso), ev = eventsOn(iso), fed = hol.some(h => h.fed);
+    const cls = ['day', out ? 'out' : '', iso === today ? 'today' : '', iso === calUi.sel ? 'sel' : '', fed ? 'fed' : '', d.getDay() === 0 || d.getDay() === 6 ? 'we' : ''].filter(Boolean).join(' ');
+    const label = `${WD[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}${hol.length ? ', ' + hol.map(h => h.name).join(', ') : ''}${ev.length ? `, ${ev.length} event${ev.length > 1 ? 's' : ''}` : ''}`;
+    html += `<button type="button" class="${cls}" data-cal="pick" data-d="${iso}" aria-label="${esc(label)}" aria-pressed="${iso === calUi.sel}"><span class="n">${d.getDate()}</span>
+      <span class="dots">${hol.length ? `<i class="h${fed ? ' f' : ''}"></i>` : ''}${ev.length ? '<i class="e"></i>' : ''}</span></button>`;
+  }
+  html += '</div></div>';
+  // the picked day
+  const sd = parseIso(calUi.sel), hol = holidaysOn(calUi.sel), ev = eventsOn(calUi.sel);
+  html += `<div class="card calday"><div class="calday-h"><div><div class="wdname">${WD[sd.getDay()]}</div><div class="muted">${MONTHS[sd.getMonth()]} ${sd.getDate()}, ${sd.getFullYear()} · ${esc(relDays(calUi.sel))}</div></div>
+    <button type="button" class="btn small primary" data-cal="add">+ Event</button></div>
+    ${hol.map(h => `<div class="calitem"><span class="tag${h.fed ? ' f' : ''}">${h.fed ? 'Holiday' : 'Observance'}</span>${esc(h.name)}</div>`).join('')}
+    ${ev.map(e => `<button type="button" class="calitem ev" data-cal="edit" data-id="${esc(e.id)}"><span class="tag e">${e.time ? esc(fmtClock(e.time)) : 'Event'}</span><span>${esc(e.title)}${yearsSince(e, calUi.sel) > 0 ? ` <span class="muted">(${yearsSince(e, calUi.sel)} yrs)</span>` : ''}${e.note ? `<span class="muted calnote">${esc(e.note)}</span>` : ''}</span></button>`).join('')}
+    ${!hol.length && !ev.length ? '<p class="muted calnone">Nothing on this day.</p>' : ''}</div>`;
+  // coming up: the next 60 days
+  const up = [];
+  for (let i = 0; i <= 60 && up.length < 8; i++) {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i); const iso = isoDate(d);
+    for (const h of holidaysOn(iso)) if (h.fed || i <= 21) up.push({ iso, name: h.name, kind: h.fed ? 'f' : 'o' });
+    for (const e of eventsOn(iso)) up.push({ iso, name: e.title, kind: 'e', time: e.time });
+  }
+  if (up.length) html += `<div class="sec-h"><span>Coming up</span></div><div class="card calup">${up.slice(0, 8).map(u => { const d = parseIso(u.iso);
+    return `<button type="button" class="calitem" data-cal="goto" data-d="${u.iso}"><span class="when">${esc(d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }))}</span><span class="dot ${u.kind}"></span><span>${esc(u.name)}${u.time ? ` <span class="muted">${esc(fmtClock(u.time))}</span>` : ''}</span></button>`; }).join('')}</div>`;
+  html += `<div class="foot calopts"><label class="chk"><input type="checkbox" data-cal="hol"${state.cal.holidays ? ' checked' : ''}> Show US holidays</label></div>
+    <p class="hint c">Federal holidays in red. Your events stay on this device and are in this app’s backup.</p>`;
+  view.innerHTML = html;
+}
+function eventDialog(e, date) {
+  const isNew = !e;
+  formDialog({
+    title: isNew ? 'New event' : 'Edit event',
+    fields: [
+      { name: 'title', label: 'What', required: true, value: e ? e.title : '', placeholder: 'e.g. Dentist, Mom’s birthday' },
+      { name: 'date', label: 'Date', type: 'date', required: true, value: e ? e.date : date },
+      { name: 'time', label: 'Time (optional)', type: 'time', value: e ? e.time : '' },
+      { name: 'yearly', label: 'Every year (birthdays, anniversaries)', type: 'checkbox', value: e ? e.yearly : false },
+      { name: 'note', label: 'Note (optional)', value: e ? e.note : '' }
+    ],
+    onDelete: e ? async () => { state.cal.events = state.cal.events.filter(x => x !== e); save(); render(); toast(`Deleted ${e.title}`, { label: 'Undo', fn: () => { state.cal.events.push(e); save(); render(); } }); return true; } : null,
+    onSubmit: v => {
+      if (!parseIso(v.date)) return 'Pick a date.';
+      const rec = { title: clampStr(v.title, 80), date: v.date, time: /^\d{2}:\d{2}$/.test(v.time) ? v.time : '', yearly: !!v.yearly, note: clampStr(v.note, 300) };
+      if (e) Object.assign(e, rec); else state.cal.events.push({ id: uid(), ...rec });
+      calGo(rec.date); save(); render();
+    }
+  });
+}
+view.addEventListener('click', ev => {
+  const el = ev.target.closest('[data-cal]'); if (!el || route() !== 'calendar') return;
+  switch (el.dataset.cal) {
+    case 'prev': calShift(-1); render(); break;
+    case 'next': calShift(1); render(); break;
+    case 'today': calGo(todayIso()); render(); break;
+    case 'pick': case 'goto': calGo(el.dataset.d); render(); if (el.dataset.cal === 'goto') window.scrollTo(0, 0); break;
+    case 'add': eventDialog(null, calUi.sel); break;
+    case 'edit': { const e = state.cal.events.find(x => x.id === el.dataset.id); if (e) eventDialog(e); break; }
+  }
+});
+view.addEventListener('change', ev => {
+  if (route() !== 'calendar') return;
+  if (ev.target.id === 'cgo' && parseIso(ev.target.value)) { calGo(ev.target.value); render(); }
+  if (ev.target.dataset.cal === 'hol') { state.cal.holidays = ev.target.checked; save(); render(); }
+});
+/* swipe left/right on the month to change it */
+let calTouch = null;
+view.addEventListener('touchstart', ev => { if (route() === 'calendar' && ev.target.closest('#calgrid')) { const t = ev.touches[0]; calTouch = [t.clientX, t.clientY]; } }, { passive: true });
+view.addEventListener('touchend', ev => {
+  if (!calTouch) return; const t = ev.changedTouches[0], dx = t.clientX - calTouch[0], dy = t.clientY - calTouch[1]; calTouch = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { calShift(dx < 0 ? 1 : -1); render(); }
+});
 
 
 (async function init() {
   try { db = await openDB(DB_NAME); const raw = await idbGet(db, 'state'); if (raw) state = normState(JSON.parse(raw)); }
   catch (e) { console.error(e); toast('This browser isn’t allowing storage, so links won’t be kept.'); }
   Sync.onChange(() => renderIfSafe());
-  applyTheme(); render();
+  ensureBuiltins(); applyTheme(); render();
   Sync.start({ db, key: 'sync', model: syncModel }).catch(e => console.error(e));
 })();
 </script>
