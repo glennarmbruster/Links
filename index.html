@@ -290,6 +290,7 @@ a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);col
 .poster{flex:none;width:46px;height:69px;border-radius:6px;object-fit:cover;background:var(--soft);display:grid;place-items:center;font-size:22px}
 .relb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .reln{font-weight:650;line-height:1.3}.relm{font-size:13.5px;color:var(--muted);line-height:1.35}
+.relcast{margin:4px 0 10px;font-size:14.5px}.relcast p{margin:0 0 6px}.relcast ul{margin:0;padding:0;list-style:none;columns:1}.relcast li{padding:5px 0;border-top:1px solid var(--line)}.relcast li:first-child{border-top:0}.relcast a{text-decoration:none;font-weight:600}
 .relwhen{font-size:14px;line-height:1.4;font-weight:600;color:var(--ink)}.relwhen b{font-weight:600}.relwhen .muted{font-weight:400}
 .rellink{font-size:13px;font-weight:600;text-decoration:none}
 .relweek{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 2px;text-align:center}
@@ -1926,7 +1927,7 @@ view.addEventListener('touchend', ev => {
    The phone asks TMDB directly; nothing goes through GitHub. TMDB release types: 4 = digital, 5 = physical. */
 const TMDB = 'https://api.themoviedb.org/3', TMDB_IMG = 'https://image.tmdb.org/t/p/';
 const REL_FRESH = 12 * 3600e3, REL_PAGES = 10;   /* up to 200 movies a week */
-const relUi = { week: 0, open: '', all: false, find: '', found: null, finding: false, err: '', loading: false, checking: false };
+const relUi = { week: 0, cast: '', open: '', all: false, find: '', found: null, finding: false, err: '', loading: false, checking: false };
 const relMem = {}, relTried = {}, relDetTried = {};            // type -> { at, from, to, items }
 let relKey = null, relKeyLoaded = false, relGenres = null, relInfo = {};   // relInfo: movie id -> details (formats, rating, IMDb id)
 
@@ -2027,7 +2028,7 @@ async function relDetails(id, force) {
   if (!force && Date.now() - (relDetTried[id] || 0) < 120e3) return c || null;   /* after a failed try, wait 2 minutes (or Refresh) */
   relDetTried[id] = Date.now();
   try {
-    const m = await tmdbGet(`/movie/${id}`, { append_to_response: 'release_dates,external_ids', language: 'en-US' });
+    const m = await tmdbGet(`/movie/${id}`, { append_to_response: 'release_dates,external_ids,credits', language: 'en-US' });
     const us = ((m.release_dates && m.release_dates.results) || []).find(r => r.iso_3166_1 === 'US');
     const rd = (us && us.release_dates) || [], first = t => rd.filter(r => r.type === t).map(r => str(r.release_date).slice(0, 10)).sort()[0] || '';
     /* digital and disc: the next one coming (a new 4K edition), else the first */
@@ -2035,6 +2036,8 @@ async function relDetails(id, force) {
     const info = { at: Date.now(), id, title: str(m.title), year: str(m.release_date).slice(0, 4), poster: str(m.poster_path), runtime: m.runtime || 0,
       cert: (rd.find(r => r.certification) || {}).certification || '', imdb: (m.external_ids && m.external_ids.imdb_id) || m.imdb_id || '', sum: str(m.overview).slice(0, 700),
       genres: (m.genres || []).map(g => str(g.name)).filter(Boolean).slice(0, 3),
+      cast: ((m.credits && m.credits.cast) || []).slice(0, 15).map(c => ({ id: c.id, n: str(c.name).slice(0, 80), c: str(c.character).slice(0, 80) })),
+      director: ((m.credits && m.credits.crew) || []).filter(c => c.job === 'Director').map(c => str(c.name)).slice(0, 3),
       theater: first(3) || first(2), digital: soon(4), disc: soon(5), formats: [...new Set(rd.filter(r => r.type === 5).map(r => str(r.note).trim()).filter(Boolean))].slice(0, 6) };
     relInfo[id] = info; relCachePut('m:' + id, info); return info;
   } catch (e) { console.warn(e); return c || null; }
@@ -2059,12 +2062,20 @@ function relMoreHTML(m, info, withDates) {
   const sum = (info && info.sum) || m.sum || '', w = relWatching(m.id);
   return `<div class="relmore">${sum ? `<p>${esc(sum)}</p>` : info ? '<p class="muted">No description on TMDB yet.</p>' : ''}${info ? `<p class="muted">${esc([info.cert, info.runtime ? `${info.runtime} min` : '', info.theater ? `In theaters ${relFmt(info.theater)}` : ''].filter(Boolean).join(' · '))}</p>
     ${withDates ? `<p class="relwhen">${relDatesHTML(info)}</p>` : ''}${withDates && info.formats.length ? `<p class="muted">Formats: ${esc(info.formats.join(', '))}</p>` : ''}` : '<p class="muted">Getting details…</p>'}
+    ${relUi.cast === String(m.id) ? relCastHTML(info) : ''}
     <div class="chips"><button type="button" class="chip" data-rel="watch" data-id="${m.id}" aria-pressed="${w}">${w ? '★ Watching for it' : '☆ Watch for it'}</button>
+    <button type="button" class="chip" data-rel="cast" data-id="${m.id}" aria-pressed="${relUi.cast === String(m.id)}">👥 Cast</button>
     ${info && info.imdb ? `<a class="chip" href="https://www.imdb.com/title/${esc(info.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : ''}
     <a class="chip" href="https://www.themoviedb.org/movie/${m.id}" target="_blank" rel="noopener">TMDB</a></div></div>`;
 }
 /* genre names: from the movie's genre ids (lists, search) or its details (Watching) */
 const relGenreNames = (m, info) => { const g = (m.genres || []).map(x => (typeof x === 'number' ? relGenres && relGenres[x] : x)).filter(Boolean); return (g.length ? g : (info && info.genres) || []).slice(0, 3).join(', '); };
+/* cast on request: director, then the top-billed actors with their roles */
+function relCastHTML(info) {
+  if (!info || !info.cast) return '<p class="muted">Getting the cast…</p>';
+  if (!info.cast.length && !info.director.length) return '<p class="muted">TMDB has no cast listed yet.</p>';
+  return `<div class="relcast">${info.director.length ? `<p><b>Director</b> ${esc(info.director.join(', '))}</p>` : ''}<ul>${info.cast.map(c => `<li><a href="https://www.themoviedb.org/person/${c.id}" target="_blank" rel="noopener">${esc(c.n)}</a>${c.c ? ` <span class="muted">as ${esc(c.c)}</span>` : ''}</li>`).join('')}</ul></div>`;
+}
 const relPosterHTML = p => (p ? `<img class="poster" alt="" loading="lazy" src="${TMDB_IMG}w92${esc(p)}">` : '<span class="poster none">🎬</span>');
 function relRow(m) {
   const open = relUi.open === String(m.id), info = relInfo[m.id], w = relWatching(m.id);
@@ -2160,6 +2171,9 @@ view.addEventListener('click', e => {
   switch (el.dataset.rel) {
     case 'list': state.rel.view = 'list'; relUi.open = ''; save(); render(); window.scrollTo(0, 0); break;
     case 'my': state.rel.view = 'watching'; save(); render(); window.scrollTo(0, 0); break;
+    case 'cast': relUi.cast = relUi.cast === String(id) ? '' : String(id); render();
+      if (relUi.cast && !(relInfo[id] && relInfo[id].cast)) relDetails(id, true).then(() => { if (route() === 'releases') renderIfSafe(); });   /* details saved before cast was added */
+      break;
     case 'open': relUi.open = relUi.open === String(id) ? '' : String(id); render(); if (relUi.open) relDetails(id).then(() => { if (route() === 'releases') renderIfSafe(); }); break;
     case 'watch': { const m = relItem(id); if (m) relToggleWatch(m); break; }
     case 'watchid': { const f = state.rel.follow.find(x => x.id === id) || (relUi.found || []).find(x => x.id === id); if (f) relToggleWatch(f); break; }
