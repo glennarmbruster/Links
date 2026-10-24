@@ -1972,7 +1972,13 @@ let relKey = null, relKeyLoaded = false, relGenres = null, relInfo = {};   // re
 /* ---- the key: its own database, so "Back up all apps" never picks it up ---- */
 let relDbP = null;
 const relDb = () => (relDbP = relDbP || openDB('goobs-links-keys').catch(() => null));
-async function relLoadKey() { if (relKeyLoaded) return relKey; try { const d = await relDb(); relKey = d ? (await idbGet(d, 'tmdb')) || '' : ''; } catch { relKey = ''; } relKeyLoaded = true; return relKey; }
+async function relLoadKey() {
+  if (relKeyLoaded) return relKey;
+  try { const d = await relDb(); relKey = d ? (await idbGet(d, 'tmdb')) || '' : ''; } catch { relKey = ''; }
+  /* the Goobs Apps copy can borrow the key Watch Log already has on this device */
+  if (!relKey && typeof REL_KEY_FALLBACK === 'function') { try { relKey = str(await REL_KEY_FALLBACK()); } catch { relKey = ''; } }
+  relKeyLoaded = true; return relKey;
+}
 async function relSaveKey(k) { relKey = k; relKeyLoaded = true; const d = await relDb(); if (d) await idbPut(d, 'tmdb', k); }
 let relCacheP = null;
 const relCache = () => (relCacheP = relCacheP || openDB('goobs-links-cache').catch(() => null));
@@ -2121,11 +2127,13 @@ function relMoreHTML(m, info, withDates) {
 }
 /* genre names: from the movie's genre ids (lists, search) or its details (Watching) */
 const relGenreNames = (m, info) => { const g = (m.genres || []).map(x => (typeof x === 'number' ? relGenres && relGenres[x] : x)).filter(Boolean); return (g.length ? g : (info && info.genres) || []).slice(0, 3).join(', '); };
+/* an actor: Watch Log in the Goobs Apps copy (same app, same data), TMDB's page in Links */
+const relPersonLink = c => (typeof REL_PERSON_HREF === 'function' ? `<a href="${esc(REL_PERSON_HREF(c))}">${esc(c.n)}</a>` : `<a href="https://www.themoviedb.org/person/${c.id}" target="_blank" rel="noopener">${esc(c.n)}</a>`);
 /* cast on request: director, then the top-billed actors with their roles */
 function relCastHTML(info) {
   if (!info || !info.cast) return '<p class="muted">Getting the cast…</p>';
   if (!info.cast.length && !info.director.length) return '<p class="muted">TMDB has no cast listed yet.</p>';
-  return `<div class="relcast">${info.director.length ? `<p><b>Director</b> ${esc(info.director.join(', '))}</p>` : ''}<ul>${info.cast.map(c => `<li><a href="https://www.themoviedb.org/person/${c.id}" target="_blank" rel="noopener">${esc(c.n)}</a>${c.c ? ` <span class="muted">as ${esc(c.c)}</span>` : ''}</li>`).join('')}</ul></div>`;
+  return `<div class="relcast">${info.director.length ? `<p><b>Director</b> ${esc(info.director.join(', '))}</p>` : ''}<ul>${info.cast.map(c => `<li>${relPersonLink(c)}${c.c ? ` <span class="muted">as ${esc(c.c)}</span>` : ''}</li>`).join('')}</ul></div>`;
 }
 const relPosterHTML = p => (p ? `<img class="poster" alt="" loading="lazy" src="${TMDB_IMG}w92${esc(p)}">` : '<span class="poster none">🎬</span>');
 function relRow(m) {
