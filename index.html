@@ -166,15 +166,16 @@ body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
 .gi .ico.emo{font-size:34px}
 .gi .nm{font-size:12px;font-weight:600;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
 .gi .star{position:absolute;top:-4px;right:6px;margin:0}
-.cols{display:grid;gap:2px 6px;padding:6px}
-.cols2{grid-template-columns:repeat(2,minmax(0,1fr))}.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}
-.ci{display:flex;align-items:center;gap:9px;padding:8px;border-radius:10px;min-height:50px;text-decoration:none;color:inherit;min-width:0}
-.ci:active{background:var(--soft)}
-.ci .ico{width:34px;height:34px;border-radius:9px;font-size:15px}.ci .ico.emo{font-size:21px}.ci .ico.l3{font-size:11px}
-.ci .nm{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.cols3 .ci{gap:7px;padding:7px 5px}.cols3 .ci .ico{width:28px;height:28px;border-radius:7px;font-size:13px}.cols3 .ci .ico.emo{font-size:18px}.cols3 .ci .ico.l3{font-size:10px}.cols3 .ci .nm{font-size:13px}
-.ci .star{font-size:11px;margin-left:-4px;flex:none}
 .edit-tools{display:flex;gap:4px;flex:none}
+/* All icons: rearrange by dragging */
+.grid.arrange .gi{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab;animation:wig .28s ease-in-out infinite alternate}
+.grid.arrange .gi:nth-child(2n){animation-delay:-.14s}
+.grid.arrange .gi,.grid.arrange img{-webkit-user-drag:none}
+.grid.arrange .gi.dragging{animation:none;z-index:5;cursor:grabbing;opacity:.92;pointer-events:none}
+.grid.arrange .gi.dragging .ico{box-shadow:0 10px 30px rgba(0,0,0,.3)}
+@keyframes wig{from{transform:rotate(-1.2deg)}to{transform:rotate(1.2deg)}}
+@media (prefers-reduced-motion:reduce){.grid.arrange .gi{animation:none}}
+.arrange-tip{text-align:center;color:var(--muted);font-size:14px;margin:12px 0 0}
 #ask .ask-actions{flex-direction:column;align-items:stretch}
 #ask .ask-actions .btn{justify-content:flex-start}
 .edit-tools .btn{min-width:36px;padding:0 8px}
@@ -746,7 +747,7 @@ async function syncAction(a) {
 
 /* ===================== Links: personal bookmarks ===================== */
 /* views: [key, label, button symbol] */
-const VIEWS = [['list', 'List with addresses', '☰'], ['icons', 'Big icons', '▦'], ['cols2', 'Icons and names, 2 columns', '⠿'], ['cols3', 'Icons and names, 3 columns', '⁝⁝']];
+const VIEWS = [['list', 'List with addresses', '☰'], ['icons', 'Big icons by group', '▦'], ['all', 'All icons, no groups (drag to arrange)', '⣿']];
 const APP_ID = 'goobs-links', DB_NAME = 'goobs-links-db', SCHEMA = 1;
 const MAX_LINKS = 2000, MAX_GROUPS = 100, RECENT_N = 4;
 const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a', '#ca8a04', '#0891b2', '#7c3aed', '#db2777', '#4d7c0f', '#b45309'];
@@ -766,7 +767,7 @@ function normLink(l, groupIds) {
     id: clampStr(l.id, 40) || uid(), name: clampStr(l.name, 60) || autoName(url), url,
     group: groupIds.has(str(l.group)) ? str(l.group) : '', fav: !!l.fav, emoji: clampStr(l.emoji, 16),
     icon: icon === 'none' || /^https:\/\/[^\s"'<>]{1,500}$/.test(icon) ? icon : '', iconAt: isNum(l.iconAt) ? l.iconAt : 0,
-    note: clampStr(l.note, 300), added: isNum(l.added) ? l.added : Date.now(), o: ordOf(l.o), opened: isNum(l.opened) ? l.opened : 0, uses: isNum(l.uses) ? Math.max(0, Math.floor(l.uses)) : 0
+    note: clampStr(l.note, 300), added: isNum(l.added) ? l.added : Date.now(), o: ordOf(l.o), a: ordOf(l.a), opened: isNum(l.opened) ? l.opened : 0, uses: isNum(l.uses) ? Math.max(0, Math.floor(l.uses)) : 0
   };
 }
 function normState(s) {
@@ -775,13 +776,26 @@ function normState(s) {
   const ids = new Set(groups.map(g => g.id)), lseen = new Set();
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
-  const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '' };
-  resort(out); return out;
+  const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : /^cols/.test(str(s.view)) ? 'all' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '' };
+  resort(out); fillAllOrder(out); return out;
+}
+/* "All icons" has its own order (a), set by dragging there; links without one follow the grouped order */
+function groupedOrder(s = state) { const gi = new Map(s.groups.map((g, i) => [g.id, i])), at = g => (gi.has(g) ? gi.get(g) : 1e9); return s.links.slice().sort((x, y) => at(x.group) - at(y.group) || x.o - y.o); }
+function fillAllOrder(s = state) { if (!s.links.some(l => l.a == null)) return; const max = s.links.reduce((m, l) => (l.a == null ? m : Math.max(m, l.a)), -1); let n = max + 1; for (const l of groupedOrder(s)) if (l.a == null) l.a = n++; }
+const allOrder = () => state.links.slice().sort((x, y) => x.a - y.a || x.o - y.o);
+/* move one link in All icons to sit at index i (only that link's number changes, so only it syncs) */
+function placeInAll(id, i) {
+  const list = allOrder(), l = list.find(x => x.id === id); if (!l) return;
+  const rest = list.filter(x => x !== l); i = Math.max(0, Math.min(i, rest.length));
+  const prev = rest[i - 1], next = rest[i];
+  l.a = prev && next ? (prev.a + next.a) / 2 : prev ? prev.a + 1 : next ? next.a - 1 : 0;
+  commit();
 }
 /* order is kept as a number on each link and group, so a move syncs as a change to just the two that swapped */
 const byOrd = (a, b) => a.o - b.o || (a.added || 0) - (b.added || 0);
 function resort(s = state) { s.groups.sort(byOrd); s.links.sort(byOrd); }
 const nextOrd = list => list.reduce((m, x) => Math.max(m, x.o), -1) + 1;
+const nextAll = () => state.links.reduce((m, x) => Math.max(m, x.a == null ? -1 : x.a), -1) + 1;
 
 /* ---- names and addresses ---- */
 const isLocalHost = h => !h.includes('.') || /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || /^\[/.test(h) || /\.(local|lan|home|internal|arpa)$/.test(h);
@@ -853,7 +867,7 @@ const syncModel = {
   colls: [C_GROUPS, C_LINKS],
   toEntities() {
     return [...state.groups.map(g => ({ coll: C_GROUPS, id: g.id, data: { name: g.name, o: g.o } })),
-      ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, note: l.note, added: l.added, o: l.o } }))];
+      ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, note: l.note, added: l.added, o: l.o, a: l.a } }))];
   },
   apply(out) {
     const before = JSON.stringify([state.groups, state.links]);
@@ -869,7 +883,7 @@ const syncModel = {
     }
     /* the same address added on two devices before they were signed in: keep the first one */
     links.sort(byOrd); const urls = new Set();
-    state.groups = groups; state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort();
+    state.groups = groups; state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort(); fillAllOrder();
     if (JSON.stringify([state.groups, state.links]) === before) return;
     save(); renderIfSafe();
   }
@@ -879,7 +893,7 @@ let pendingRender = false;
 function renderIfSafe() {
   if (committing) return;
   const a = document.activeElement;
-  if ($('dialog[open]') || (a && a.id === 'q' && a.value)) { pendingRender = true; return; }
+  if ($('dialog[open]') || drag || (a && a.id === 'q' && a.value)) { pendingRender = true; return; }
   render();
 }
 document.addEventListener('close', () => { if (pendingRender) setTimeout(() => { if (!$('dialog[open]')) { pendingRender = false; render(); } }, 0); }, true);
@@ -895,13 +909,12 @@ function ensureGroup(name) {
 const view = $('#view');
 function linkHTML(l, mode) {
   const open = `href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" data-open="${esc(l.id)}"`;
-  if (/^cols/.test(mode) && !ui.edit) return `<a class="ci" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
-  if (mode === 'icons' && !ui.edit) return `<a class="gi" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
+  if ((mode === 'icons' || mode === 'all') && !ui.edit) return `<a class="gi" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
   const body = `${tileHTML(l)}<div class="main"><div class="nm">${esc(l.name)}${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</div><div class="host">${esc(l.note || shortUrl(l.url))}</div></div>`;
   if (!ui.edit) return `<a class="lrow" ${open}>${body}</a>`;
   return `<div class="lrow">${body}<div class="edit-tools"><button type="button" class="btn small" data-act="up" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} up">↑</button><button type="button" class="btn small" data-act="down" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} down">↓</button><button type="button" class="btn small" data-act="edit" data-id="${esc(l.id)}">Edit</button></div></div>`;
 }
-const block = (list, mode) => (/^cols/.test(mode) && !ui.edit ? `<div class="card cols ${mode}">${list.map(l => linkHTML(l, mode)).join('')}</div>` : mode === 'icons' && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
+const block = (list, mode) => ((mode === 'icons' || mode === 'all') && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
 function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + groupName(l.group) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
 function render() {
   const mode = state.view, total = state.links.length;
@@ -923,6 +936,14 @@ function render() {
     html += hits.length ? `<div class="sec-h"><span>Results</span><span>${hits.length}</span></div>${block(hits, mode)}` : '<div class="empty"><h2>No matches</h2></div>';
     view.innerHTML = html; return;
   }
+  if (mode === 'all') {
+    const list = allOrder();
+    if (ui.edit) html += `<p class="arrange-tip">Drag icons to rearrange · tap one to edit it</p><div class="card grid arrange" id="allGrid">${list.map(l => `<a class="gi" href="#" data-id="${esc(l.id)}">${tileHTML(l)}<span class="nm">${esc(l.name)}</span></a>`).join('')}</div>`;
+    else html += block(list, 'icons');
+    if (ui.edit) html += toolsHTML(false);
+    else html += `<p class="hint c" style="margin-top:22px">Site icons: the site’s own icon, else DuckDuckGo’s icon service.</p>`;
+    view.innerHTML = html; return;
+  }
   if (!ui.edit) {
     const favs = state.links.filter(l => l.fav);
     if (favs.length) html += `<div class="sec-h"><span>Favorites</span></div>${block(favs, mode)}`;
@@ -936,13 +957,16 @@ function render() {
     const tools = ui.edit && gid ? `<span class="edit-tools"><button type="button" class="btn small" data-act="gup" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} up">↑</button><button type="button" class="btn small" data-act="gdown" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} down">↓</button><button type="button" class="btn small" data-act="gedit" data-g="${esc(gid)}">Rename</button></span>` : `<span>${list.length}</span>`;
     html += `<div class="sec-h gh"><span class="grow">${esc(gname)}</span>${tools}</div>${list.length ? block(list, mode) : '<p class="hint" style="margin:0 4px">Empty group. Delete it from Rename.</p>'}`;
   }
-  if (ui.edit) html += `<div class="foot"><button type="button" class="btn" data-act="gnew">New group</button></div>
-    <div class="sec-h"><span>Bring in and back up</span></div>
-    <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
-    <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links stay the same everywhere. Recent and the list/icon choice stay per device.')}
-    <p class="hint c">Links are also kept on this device and included in Goobs “Back up all apps.”</p>`;
+  if (ui.edit) html += toolsHTML(true);
   else html += `<p class="hint c" style="margin-top:22px">Site icons: the site’s own icon, else DuckDuckGo’s icon service.</p>`;
   view.innerHTML = html;
+}
+function toolsHTML(groups) {
+  return `${groups ? '<div class="foot"><button type="button" class="btn" data-act="gnew">New group</button></div>' : ''}
+    <div class="sec-h"><span>Bring in and back up</span></div>
+    <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
+    <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links stay the same everywhere. Recent and the view you pick stay per device.')}
+    <p class="hint c">Links are also kept on this device and included in Goobs “Back up all apps.”</p>`;
 }
 
 /* ---- add / edit ---- */
@@ -971,7 +995,7 @@ function linkDialog(l) {
       else if (v.newGroup.trim()) group = ensureGroup(v.newGroup);
       const rec = { name: clampStr(v.name, 60) || autoName(url), url, group, emoji: clampStr(v.emoji, 16), note: clampStr(v.note, 300), fav: v.fav };
       if (l) { if (l.url !== url) { l.icon = ''; l.iconAt = 0; } Object.assign(l, rec); }
-      else { if (state.links.length >= MAX_LINKS) return 'That’s the most links this app holds.'; state.links.push(normLink({ ...rec, id: uid(), added: Date.now(), o: nextOrd(state.links) }, new Set(state.groups.map(g => g.id)))); }
+      else { if (state.links.length >= MAX_LINKS) return 'That’s the most links this app holds.'; state.links.push(normLink({ ...rec, id: uid(), added: Date.now(), o: nextOrd(state.links), a: nextAll() }, new Set(state.groups.map(g => g.id)))); }
       state.lastGroup = group; commit(); if (isNew) toast(`Added ${rec.name}`);
     }
   });
@@ -1064,9 +1088,10 @@ function addMany(items) {
     if (state.links.length >= MAX_LINKS) break;
     if (state.links.some(l => l.url === it.url)) { skipped++; continue; }
     const group = it.group ? ensureGroup(it.group) : '';
-    state.links.push(normLink({ id: uid(), name: it.name || autoName(it.url), url: it.url, group, emoji: it.emoji || '', added: Date.now(), o: nextOrd(state.links) }, new Set(state.groups.map(g => g.id))));
+    state.links.push(normLink({ id: uid(), name: it.name || autoName(it.url), url: it.url, group, emoji: it.emoji || '', added: Date.now(), o: nextOrd(state.links), a: null }, new Set(state.groups.map(g => g.id))));
     added++;
   }
+  fillAllOrder();   /* a pasted batch lands at the end of All icons in its grouped order */
   commit();
   toast(`Added ${added} link${added === 1 ? '' : 's'}${skipped ? ` · ${skipped} already saved` : ''}`);
 }
@@ -1101,6 +1126,39 @@ async function doRestore() {
 }
 
 /* ---- events ---- */
+/* ---- All icons: drag to rearrange (pointer events, so a finger works on iPhone as well as a mouse) ---- */
+let drag = null;
+const placeDrag = e => { drag.el.style.transform = ''; const r = drag.el.getBoundingClientRect(); drag.el.style.transform = `translate(${e.clientX - drag.ox - r.left}px,${e.clientY - drag.oy - r.top}px)`; };
+view.addEventListener('pointerdown', e => {
+  const grid = $('#allGrid'); if (!grid || drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const a = e.target.closest('#allGrid .gi'); if (!a) return;
+  e.preventDefault();
+  const r = a.getBoundingClientRect();
+  drag = { el: a, id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top, moved: false, last: null };
+});
+window.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag.moved) { if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 8) return; drag.moved = true; drag.el.classList.add('dragging'); }
+  e.preventDefault();
+  const grid = $('#allGrid'), under = document.elementFromPoint(e.clientX, e.clientY), t = under && under.closest && under.closest('#allGrid .gi');
+  if (t !== drag.last) drag.last = null;
+  if (t && t !== drag.el && t !== drag.last) {   /* swap once per icon entered, so one that just slid under the finger doesn't flip back */
+    drag.last = t; const cs = [...grid.children], from = cs.indexOf(drag.el), to = cs.indexOf(t);
+    grid.insertBefore(drag.el, from < to ? t.nextSibling : t);
+  }
+  if (e.clientY < 70) window.scrollBy(0, -12); else if (e.clientY > innerHeight - 70) window.scrollBy(0, 12);
+  placeDrag(e);
+}, { passive: false });
+function endDrag(e) {
+  if (!drag || (e && e.pointerId !== drag.id)) return;
+  const d = drag; drag = null; d.el.classList.remove('dragging'); d.el.style.transform = '';
+  if (!d.moved) { if (e && e.type === 'pointerup') { const l = linkById(d.el.dataset.id); if (l) linkDialog(l); } return; }
+  const grid = $('#allGrid'); placeInAll(d.el.dataset.id, grid ? [...grid.children].indexOf(d.el) : 0);
+}
+window.addEventListener('pointerup', endDrag); window.addEventListener('pointercancel', endDrag);
+view.addEventListener('click', e => { if (e.target.closest('#allGrid')) e.preventDefault(); }, true);
+view.addEventListener('contextmenu', e => { if (e.target.closest('#allGrid')) e.preventDefault(); });
+
 $('#addBtn').onclick = () => linkDialog(null);
 $('#viewBtn').onclick = async () => {
   const v = await askDialog({ title: 'View', body: '<p class="muted">Each device keeps its own choice.</p>', buttons: [...VIEWS.map(([k, label, sym]) => ({ label: `${sym}  ${label}${k === state.view ? '  ✓' : ''}`, value: k, kind: k === state.view ? 'primary' : '' })), { label: 'Cancel', value: null, kind: 'ghost' }] });
