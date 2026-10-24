@@ -229,8 +229,11 @@ textarea.big{min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size
 #backBtn{font-size:26px;padding:0 8px 2px;min-width:36px;margin-right:-6px}
 /* Calendar */
 .calbar{display:flex;gap:10px;align-items:flex-end;margin:14px 0 10px}
-.calgo{flex:1;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
-.calgo input{min-height:44px;border-radius:12px;background:var(--card);width:100%}
+.calgo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+/* iPhone date boxes have their own minimum width and overflowed into the Today button: let it shrink to fit */
+.calgo input{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;min-height:44px;border-radius:12px;background:var(--card);text-align:left}
+.calgo input::-webkit-date-and-time-value{text-align:left}
+.calbar .btn{flex:none;min-height:44px}
 .calcard{padding:8px 8px 10px}
 .calhead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px}.calhead h2{font-size:19px}.calhead .btn{font-size:24px;min-width:44px}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;touch-action:pan-y}
