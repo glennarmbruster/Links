@@ -286,6 +286,7 @@ a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);col
 .relrow{border-top:1px solid var(--line)}.relrow:first-child{border-top:0}.relrow.mine{background:var(--accent-soft)}
 .relmain{display:flex;gap:12px;align-items:center;width:100%;padding:10px 14px;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .relmain.static{cursor:default}
+.relline{display:flex;align-items:center;gap:6px;padding-right:12px}.relline .relmain{flex:1;min-width:0}.relline>.chip{flex:none}
 .poster{flex:none;width:46px;height:69px;border-radius:6px;object-fit:cover;background:var(--soft);display:grid;place-items:center;font-size:22px}
 .relb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .reln{font-weight:650;line-height:1.3}.relm{font-size:13.5px;color:var(--muted);line-height:1.35}
@@ -2002,7 +2003,7 @@ async function relLoad(force) {
   if (relUi.loading || (!force && Date.now() - (relTried[k] || 0) < 120e3)) return;   /* after a failed try, wait 2 minutes (or Refresh) */
   relUi.loading = true; relUi.err = ''; relTried[k] = Date.now();
   try {
-    if (!relGenres) { relGenres = await relCacheGet('genres'); if (!relGenres) { const g = await tmdbGet('/genre/movie/list', { language: 'en-US' }); relGenres = Object.fromEntries((g.genres || []).map(x => [x.id, x.name])); relCachePut('genres', relGenres); } }
+    await relEnsureGenres();
     const items = await relFetchBoth(from, to);
     hit = { at: Date.now(), from, to, items }; relMem[k] = hit; relCachePut(k, hit);
   } catch (e) { console.warn(e); relUi.err = e.auth ? e.message : navigator.onLine ? 'TMDB didn’t answer. Try again in a minute.' : 'You’re offline, and this week isn’t saved on this device.'; if (hit) relMem[k] = hit; }
@@ -2033,35 +2034,53 @@ async function relDetails(id, force) {
     const soon = t => { const all = rd.filter(r => r.type === t).map(r => str(r.release_date).slice(0, 10)).sort(); return all.find(d => d >= relDay(-14)) || all[0] || ''; };
     const info = { at: Date.now(), id, title: str(m.title), year: str(m.release_date).slice(0, 4), poster: str(m.poster_path), runtime: m.runtime || 0,
       cert: (rd.find(r => r.certification) || {}).certification || '', imdb: (m.external_ids && m.external_ids.imdb_id) || m.imdb_id || '', sum: str(m.overview).slice(0, 700),
+      genres: (m.genres || []).map(g => str(g.name)).filter(Boolean).slice(0, 3),
       theater: first(3) || first(2), digital: soon(4), disc: soon(5), formats: [...new Set(rd.filter(r => r.type === 5).map(r => str(r.note).trim()).filter(Boolean))].slice(0, 6) };
     relInfo[id] = info; relCachePut('m:' + id, info); return info;
   } catch (e) { console.warn(e); return c || null; }
 }
 
+/* genre names (Action, Comedy…): kept on the device, loaded once */
+let relGenresP = null;
+function relEnsureGenres() {
+  if (relGenres) return Promise.resolve(relGenres);
+  return (relGenresP = relGenresP || (async () => {
+    relGenres = await relCacheGet('genres');
+    if (!relGenres) { const g = await tmdbGet('/genre/movie/list', { language: 'en-US' }); relGenres = Object.fromEntries((g.genres || []).map(x => [x.id, x.name])); relCachePut('genres', relGenres); }
+    if (route() === 'releases') renderIfSafe(); return relGenres;
+  })().catch(() => { relGenresP = null; return null; }));
+}
 /* ---- screen ---- */
 const relFmt = iso => parseIso(iso).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: iso.slice(0, 4) === todayIso().slice(0, 4) ? undefined : 'numeric' });   /* the year only when it isn't this year */
 const relWatching = id => state.rel.follow.some(f => f.id === id);
 const weekStart = iso => { const d = parseIso(iso); d.setDate(d.getDate() - d.getDay()); return isoDate(d); };   // weeks start Sunday, like the calendar
+/* the tap-to-open part: description, rating, runtime, theaters, links (dates too, when the row doesn't already show them) */
+function relMoreHTML(m, info, withDates) {
+  const sum = (info && info.sum) || m.sum || '', w = relWatching(m.id);
+  return `<div class="relmore">${sum ? `<p>${esc(sum)}</p>` : info ? '<p class="muted">No description on TMDB yet.</p>' : ''}${info ? `<p class="muted">${esc([info.cert, info.runtime ? `${info.runtime} min` : '', info.theater ? `In theaters ${relFmt(info.theater)}` : ''].filter(Boolean).join(' · '))}</p>
+    ${withDates ? `<p class="relwhen">${relDatesHTML(info)}</p>` : ''}${withDates && info.formats.length ? `<p class="muted">Formats: ${esc(info.formats.join(', '))}</p>` : ''}` : '<p class="muted">Getting details…</p>'}
+    <div class="chips"><button type="button" class="chip" data-rel="watch" data-id="${m.id}" aria-pressed="${w}">${w ? '★ Watching for it' : '☆ Watch for it'}</button>
+    ${info && info.imdb ? `<a class="chip" href="https://www.imdb.com/title/${esc(info.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : ''}
+    <a class="chip" href="https://www.themoviedb.org/movie/${m.id}" target="_blank" rel="noopener">TMDB</a></div></div>`;
+}
+/* genre names: from the movie's genre ids (lists, search) or its details (Watching) */
+const relGenreNames = (m, info) => { const g = (m.genres || []).map(x => (typeof x === 'number' ? relGenres && relGenres[x] : x)).filter(Boolean); return (g.length ? g : (info && info.genres) || []).slice(0, 3).join(', '); };
+const relPosterHTML = p => (p ? `<img class="poster" alt="" loading="lazy" src="${TMDB_IMG}w92${esc(p)}">` : '<span class="poster none">🎬</span>');
 function relRow(m) {
   const open = relUi.open === String(m.id), info = relInfo[m.id], w = relWatching(m.id);
-  const gen = (m.genres || []).map(g => relGenres && relGenres[g]).filter(Boolean).slice(0, 2).join(', ');
+  const gen = relGenreNames(m, info);
   let h = `<div class="relrow${open ? ' open' : ''}${w ? ' mine' : ''}"><button type="button" class="relmain" data-rel="open" data-id="${m.id}" aria-expanded="${open}">
     ${m.poster ? `<img class="poster" alt="" loading="lazy" src="${TMDB_IMG}w92${esc(m.poster)}">` : '<span class="poster none">🎬</span>'}
     <span class="relb"><span class="reln">${w ? '<span class="tvstar">★</span> ' : ''}${esc(m.title)}${m.year && m.year !== m.date.slice(0, 4) ? ` <span class="muted">(${esc(m.year)})</span>` : ''}${m.edition ? ` <span class="badge">New edition${m.note ? ': ' + esc(m.note) : ''}</span>` : ''}</span>
     <span class="relwhen">${relWhen(m.digital, m.disc).map(esc).join('<br>')}</span>
     <span class="relm">${esc([m.votes >= 5 ? `★ ${m.rating.toFixed(1)}` : '', gen].filter(Boolean).join(' · '))}</span></span></button>`;
-  if (open) {
-    h += `<div class="relmore">${m.sum ? `<p>${esc(m.sum)}</p>` : ''}${info ? `<p class="muted">${esc([info.cert, info.runtime ? `${info.runtime} min` : '', info.theater ? `In theaters ${relFmt(info.theater)}` : ''].filter(Boolean).join(' · '))}</p>
-      <p class="relwhen">${relDatesHTML(info)}</p>${info.formats.length ? `<p class="muted">Formats: ${esc(info.formats.join(', '))}</p>` : ''}` : '<p class="muted">Getting details…</p>'}
-      <div class="chips"><button type="button" class="chip" data-rel="watch" data-id="${m.id}" aria-pressed="${w}">${w ? '★ Watching for it' : '☆ Watch for it'}</button>
-      ${info && info.imdb ? `<a class="chip" href="https://www.imdb.com/title/${esc(info.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : ''}
-      <a class="chip" href="https://www.themoviedb.org/movie/${m.id}" target="_blank" rel="noopener">TMDB</a></div></div>`;
-  }
+  if (open) h += relMoreHTML(m, info, true);
   return h + '</div>';
 }
 function renderReleases() {
   if (!relKeyLoaded) { relLoadKey().then(() => { if (route() === 'releases') render(); }); view.innerHTML = '<div class="empty"><p class="muted">Loading…</p></div>'; return; }
   if (!relKey) { view.innerHTML = relKeyHTML(); return; }
+  if (!relGenres && !relGenresP) relEnsureGenres();   /* a saved week shown from this device still gets its genre names */
   const my = state.rel.view === 'watching';
   let html = `<div class="search tvbar"><div class="tvdays tvslots"><button type="button" class="chip" data-rel="list" aria-pressed="${!my}">🎬 Releases</button><button type="button" class="chip" data-rel="my" aria-pressed="${my}">★ Watching (${state.rel.follow.length})</button></div></div>`;
   html += `<div class="search tvsearch"><form id="rfindf" class="tvfind"><input id="rfind" type="search" placeholder="Search any movie" value="${esc(relUi.find)}" autocomplete="off" enterkeyhint="search" aria-label="Search any movie"><button type="submit" class="btn small primary">Search</button></form></div>`;
@@ -2094,9 +2113,9 @@ function relWatchingHTML() {
   if (!state.rel.follow.length) return html + '<div class="empty"><p>Tap ☆ Watch for it on any movie, or search for one above. Its theater, digital and disc dates show here as TMDB learns them.</p></div>';
   const key = f => { const i = relInfo[f.id]; return (i && [i.digital, i.disc].filter(d => d && d >= todayIso()).sort()[0]) || '9999'; };
   html += `<div class="card tvlist">${state.rel.follow.slice().sort((a, b) => key(a).localeCompare(key(b)) || a.title.localeCompare(b.title)).map(f => {
-    const i = relInfo[f.id];
-    return `<div class="relrow"><div class="relmain static">${f.poster ? `<img class="poster" alt="" loading="lazy" src="${TMDB_IMG}w92${esc(f.poster)}">` : '<span class="poster none">🎬</span>'}<span class="relb"><span class="reln">${esc(f.title)}</span><span class="relwhen">${relDatesHTML(i)}</span>${i && i.formats.length ? `<span class="relm">${esc(i.formats.join(', '))}</span>` : ''}</span>
-      <button type="button" class="chip" data-rel="watchid" data-id="${f.id}" aria-pressed="true" aria-label="Stop watching for ${esc(f.title)}">★</button></div></div>`; }).join('')}</div>
+    const i = relInfo[f.id], open = relUi.open === String(f.id);
+    return `<div class="relrow${open ? ' open' : ''}"><div class="relline"><button type="button" class="relmain" data-rel="open" data-id="${f.id}" aria-expanded="${open}">${relPosterHTML(f.poster)}<span class="relb"><span class="reln">${esc(f.title)}${i && i.year ? ` <span class="muted">(${esc(i.year)})</span>` : ''}</span><span class="relwhen">${relDatesHTML(i)}</span><span class="relm">${esc([relGenreNames(f, i), i && i.formats.length ? i.formats.join(', ') : ''].filter(Boolean).join(' · '))}</span></span></button>
+      <button type="button" class="chip" data-rel="watchid" data-id="${f.id}" aria-pressed="true" aria-label="Stop watching for ${esc(f.title)}">★</button></div>${open ? relMoreHTML(f, i, false) : ''}</div>`; }).join('')}</div>
     <div class="foot"><button type="button" class="btn small ghost" data-rel="refreshmine">Refresh</button></div>`;
   return html;
 }
@@ -2111,10 +2130,10 @@ function relSearchHTML() {
   if (relUi.finding) return '<p class="muted c">Searching…</p>';
   let html = `<div class="sec-h"><span>Results for “${esc(relUi.find)}”</span><button type="button" class="btn small ghost" data-rel="clearfind">Close</button></div>`;
   if (!relUi.found.length) return html + '<p class="muted c">No movies found.</p>';
-  return html + `<div class="card tvlist">${relUi.found.map(m => { const i = relInfo[m.id];
-    return `<div class="relrow${relWatching(m.id) ? ' mine' : ''}"><div class="relmain static">${m.poster ? `<img class="poster" alt="" loading="lazy" src="${TMDB_IMG}w92${esc(m.poster)}">` : '<span class="poster none">🎬</span>'}<span class="relb"><span class="reln">${esc(m.title)}${m.year ? ` <span class="muted">(${esc(m.year)})</span>` : ''}</span><span class="relwhen">${relDatesHTML(i)}</span>${i && i.formats.length ? `<span class="relm">${esc(i.formats.join(', '))}</span>` : ''}
-      ${i && i.imdb ? `<a class="rellink" href="https://www.imdb.com/title/${esc(i.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : ''}</span>
-      <button type="button" class="chip" data-rel="watchid" data-id="${m.id}" aria-pressed="${relWatching(m.id)}">${relWatching(m.id) ? '★' : '☆ Watch'}</button></div></div>`; }).join('')}</div>`;
+  return html + `<div class="card tvlist">${relUi.found.map(m => { const i = relInfo[m.id], open = relUi.open === String(m.id);
+    return `<div class="relrow${relWatching(m.id) ? ' mine' : ''}${open ? ' open' : ''}"><div class="relline"><button type="button" class="relmain" data-rel="open" data-id="${m.id}" aria-expanded="${open}">${relPosterHTML(m.poster)}<span class="relb"><span class="reln">${esc(m.title)}${m.year ? ` <span class="muted">(${esc(m.year)})</span>` : ''}</span><span class="relwhen">${relDatesHTML(i)}</span><span class="relm">${esc([m.votes >= 5 ? `★ ${m.rating.toFixed(1)}` : '', relGenreNames(m, i)].filter(Boolean).join(' · '))}</span></span></button>
+      <button type="button" class="chip" data-rel="watchid" data-id="${m.id}" aria-pressed="${relWatching(m.id)}">${relWatching(m.id) ? '★' : '☆ Watch'}</button></div>${open ? relMoreHTML(m, i, false) : ''}</div>`; }).join('')}</div>
+    <p class="hint c">Tap a movie for its description.</p>`;
 }
 function relKeyHTML() {
   return `<div class="card calday"><h2 style="font-size:20px;margin-bottom:6px">Connect to TMDB</h2>
@@ -2133,7 +2152,7 @@ function relToggleWatch(m) {
   else { state.rel.follow.push({ id: m.id, title: m.title, poster: m.poster || '' }); toast(`Watching for ${m.title}`); relDetails(m.id).then(() => { if (route() === 'releases') renderIfSafe(); }); }
   save(); render();
 }
-const relItem = id => { for (const t in relMem) { const m = relMem[t].items.find(x => x.id === id); if (m) return m; } return null; };
+const relItem = id => { for (const t in relMem) { const m = relMem[t].items.find(x => x.id === id); if (m) return m; } return (relUi.found || []).find(x => x.id === id) || state.rel.follow.find(x => x.id === id) || null; };
 
 view.addEventListener('click', e => {
   const el = e.target.closest('[data-rel]'); if (!el || route() !== 'releases') return;
@@ -2162,7 +2181,8 @@ view.addEventListener('submit', async e => {
   if (e.target.id === 'rfindf') {
     e.preventDefault(); relUi.find = $('#rfind').value.trim(); if (!relUi.find) return;
     relUi.finding = true; render();
-    try { const r = await tmdbGet('/search/movie', { query: relUi.find, include_adult: 'false', language: 'en-US' }); relUi.found = (r.results || []).slice(0, 10).map(m => slimMovie(m)); }
+    try { await relEnsureGenres();
+      const r = await tmdbGet('/search/movie', { query: relUi.find, include_adult: 'false', language: 'en-US' }); relUi.found = (r.results || []).slice(0, 10).map(m => slimMovie(m)); }
     catch (ex) { relUi.found = []; toast(ex.auth ? ex.message : 'TMDB didn’t answer.'); }
     relUi.finding = false; render();
     /* then each result's US dates, top result first */
