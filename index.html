@@ -1844,6 +1844,8 @@ function relDays(iso) {
   const abs = Math.abs(n), w = abs >= 14 ? ` (${abs % 7 ? 'about ' : ''}${Math.round(abs / 7)} weeks)` : '';
   return n > 0 ? `In ${abs.toLocaleString()} days${w}` : `${abs.toLocaleString()} days ago${w}`;
 }
+/* a watched movie's digital and disc dates, for the Calendar when Movie releases isn't in Links */
+const relCalDates = id => { const i = relInfo[id]; if (!i) return ''; const w = relWhen(i.digital, i.disc); return w.length ? w.join(' · ') + ' · ' : ''; };
 /* the Watching movies' dates and followed shows' next episodes come from what Movie releases and TV listings keep on the
    device; fill in anything missing in the background (at most every few hours) */
 let calWatchAt = 0;
@@ -1883,7 +1885,9 @@ function renderCalendar() {
     <button type="button" class="btn small primary" data-cal="add">+ Event</button></div>
     ${hol.map(h => `<div class="calitem"><span class="tag${h.fed ? ' f' : ''}">${h.fed ? 'Holiday' : 'Observance'}</span>${esc(h.name)}</div>`).join('')}
     ${ev.map(e => e.src === 'movie'
-      ? `<button type="button" class="calitem ev" data-cal="gorel"><span class="tag w">🎬 ${esc(e.kinds.join(', '))}</span><span>${esc(e.title)}<span class="muted calnote">A movie you’re watching for · Movie releases ›</span></span></button>`
+      ? (state.links.some(l => appOf(l.url) === 'releases')
+        ? `<button type="button" class="calitem ev" data-cal="gorel"><span class="tag w">🎬 ${esc(e.kinds.join(', '))}</span><span>${esc(e.title)}<span class="muted calnote">A movie you’re watching for · Movie releases ›</span></span></button>`
+        : `<div class="calitem ev"><span class="tag w">🎬 ${esc(e.kinds.join(', '))}</span><span>${esc(e.title)}<span class="muted calnote">${esc(relCalDates(e.id))}A movie you’re watching for · details in Goobs Apps → Movies</span></span></div>`)
       : e.src === 'tv'
       ? `<button type="button" class="calitem ev" data-cal="gotv"><span class="tag w">📺 ${e.time ? esc(fmtClock(e.time)) : 'New'}</span><span>${esc(e.title)}${e.ep ? ` <span class="muted">· ${esc(e.ep)}</span>` : ''}<span class="muted calnote">${esc([e.net, 'A show you follow · TV listings ›'].filter(Boolean).join(' · '))}</span></span></button>`
       : e.src === 'trip'
