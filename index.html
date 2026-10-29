@@ -179,6 +179,9 @@ dialog::backdrop{background:rgba(10,15,12,.55)}
 @media (prefers-reduced-motion:reduce){.spooky .bat,.spooky .bat svg{animation:none}.spooky .b1{left:20%}.spooky .b2{left:70%}.spooky .b3{left:45%}}
 body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
 body.has-tabs{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+body.has-tabs.tabs2{padding-bottom:calc(146px + env(safe-area-inset-bottom))}
+.tabbar .tabs+.tabs{margin-top:6px}
+body.has-tabs .toast{bottom:calc(90px + env(safe-area-inset-bottom))}body.has-tabs.tabs2 .toast{bottom:calc(140px + env(safe-area-inset-bottom))}
 /* tabs: fixed at the bottom, always showing; the icons scroll above them */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);padding:8px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(0,0,0,.06)}
 .tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 12px;max-width:1100px;margin:0 auto;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}
@@ -961,7 +964,7 @@ const DRAWN = {
 const drawnOf = e => (/^§(\w+)$/.test(str(e)) && DRAWN[e.slice(1)] ? e.slice(1) : '');
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'all', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], links: [], lastGroup: '', homeName: '', tab: '' });
+const defaultState = () => ({ v: 1, view: 'all', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], links: [], lastGroup: '', homeName: '', tab: '', tabRows: 1 });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
 /* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
 const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
@@ -1020,7 +1023,7 @@ function normState(s) {
   const ids = new Set(groups.map(g => g.id)), lseen = new Set();
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
-  const out = { v: 1, view: 'all', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', homeName: clampStr(s.homeName, 40), tab: ids.has(str(s.tab)) ? str(s.tab) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
+  const out = { v: 1, view: 'all', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', homeName: clampStr(s.homeName, 40), tab: ids.has(str(s.tab)) ? str(s.tab) : '', tabRows: s.tabRows === 2 ? 2 : 1, theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
     builtins: (Array.isArray(s.builtins) ? s.builtins : []).filter(k => APPS[k]), cal: normCal(s.cal), planner: normPlanner(s.planner), rel: normRel(s.rel), tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all',
       by: s.tv && s.tv.by === 'net' ? 'net' : 'time', nets: s.tv && Array.isArray(s.tv.nets) ? [...new Set(s.tv.nets.filter(n => typeof n === 'string').map(n => clampStr(n, 40)).filter(Boolean))].slice(0, 60) : ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] } };
   resort(out); fillAllOrder(out); return out;
@@ -1231,11 +1234,16 @@ function render() {
 let shownTab = null;
 function renderTabs() {
   const bar = $('#tabbar'), app = route();
-  bar.hidden = !!app; document.body.classList.toggle('has-tabs', !app);
+  const two = state.tabRows === 2;
+  bar.hidden = !!app; document.body.classList.toggle('has-tabs', !app); document.body.classList.toggle('tabs2', !app && two);
   if (app) return;
-  const t = curTab(), keep = $('.tabs', bar) ? $('.tabs', bar).scrollLeft : 0;
-  bar.innerHTML = `<div class="tabs" role="tablist">${tabsList().map(x => `<button type="button" class="tab" role="tab" data-tab="${esc(x.id)}" aria-selected="${x.id === t}">${esc(x.name)}${ui.edit ? '<span class="tab-ed" aria-hidden="true">✎</span>' : ''}</button>`).join('')}<button type="button" class="tab tab-add" data-tab-add aria-label="Add a tab">+</button></div>`;
-  const tabs = $('.tabs', bar); tabs.scrollLeft = keep;
+  /* one row, or (a choice per device, in Edit) two rows: the first half of the tabs on top, the rest below; each row slides sideways on its own */
+  const t = curTab(), keep = $$('.tabs', bar).map(r => r.scrollLeft), list = tabsList(), cut = two ? Math.ceil((list.length + 1) / 2) : list.length;
+  const btn = x => `<button type="button" class="tab" role="tab" data-tab="${esc(x.id)}" aria-selected="${x.id === t}">${esc(x.name)}${ui.edit ? '<span class="tab-ed" aria-hidden="true">✎</span>' : ''}</button>`;
+  const add = '<button type="button" class="tab tab-add" data-tab-add aria-label="Add a tab">+</button>';
+  bar.innerHTML = two ? `<div class="tabs" role="tablist">${list.slice(0, cut).map(btn).join('')}</div><div class="tabs" role="tablist">${list.slice(cut).map(btn).join('')}${add}</div>`
+    : `<div class="tabs" role="tablist">${list.map(btn).join('')}${add}</div>`;
+  $$('.tabs', bar).forEach((r, i) => { r.scrollLeft = keep[i] || 0; });
   if (shownTab !== t) { shownTab = t; const b = $('.tab[aria-selected="true"]', bar); if (b && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
 }
 function showTab(id) {
@@ -1250,6 +1258,7 @@ function moveToTab(id, tab) {
 function toolsHTML() {
   const missing = Object.keys(APPS).filter(k => !state.links.some(l => appOf(l.url) === k));
   return `<div class="foot"><button type="button" class="btn" data-act="tnew">New tab</button><button type="button" class="btn" data-act="tedit">Rename this tab</button></div>
+    <div class="sec-h"><span>Tab bar on this device</span></div><div class="seg" role="group" aria-label="Tab bar rows"><button type="button" class="chip" data-act="rows" data-n="1" aria-pressed="${state.tabRows !== 2}">One row</button><button type="button" class="chip" data-act="rows" data-n="2" aria-pressed="${state.tabRows === 2}">Two rows</button></div>
     ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${{ tv: '📺', calendar: '📅', releases: '📀', vapay: '🎖️', calc: '🧮' }[k]} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
     <div class="sec-h"><span>Bring in and back up</span></div>
     <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
@@ -1333,7 +1342,8 @@ function tabDialog(id) {
     title: isNew ? 'New tab' : 'Rename tab',
     intro: home ? 'Home is always the first tab and can’t be deleted. Links without a tab live here.' : '',
     fields: [{ name: 'name', label: 'Tab name', required: true, value: isNew ? '' : tabName(id), placeholder: 'e.g. Work, Media, Shopping' }],
-    extra: g ? [...(i > 0 ? [{ label: '‹ Move', onClick: () => { $('#dlg').close(); moveGroup(g.id, -1); } }] : []), ...(i < last ? [{ label: 'Move ›', onClick: () => { $('#dlg').close(); moveGroup(g.id, 1); } }] : [])] : [],
+    /* Move steps one spot each tap and the box stays open, so keep tapping until it's where you want it */
+    extra: g && last > 0 ? [{ label: '‹ Move', onClick: () => { moveGroup(g.id, -1); showPos(); } }, { label: 'Move ›', onClick: () => { moveGroup(g.id, 1); showPos(); } }] : [],
     onDelete: g ? async () => {
       const n = state.links.filter(l => tabOf(l) === g.id).length;
       if (n && !(await confirmBox(`Delete the “${g.name}” tab?`, `Its ${n} link${n === 1 ? '' : 's'} move to ${tabName(HOME)}. No links are deleted.`, 'Delete tab'))) return false;
@@ -1341,7 +1351,7 @@ function tabDialog(id) {
       state.groups = state.groups.filter(x => x !== g); if (state.tab === g.id) state.tab = HOME; commit(); return true;
     } : null,
     deleteLabel: 'Delete tab',
-    submitLabel: isNew ? 'Add tab' : 'Save',
+    submitLabel: isNew ? 'Add tab' : 'Done',
     onSubmit: v => {
       const name = clampStr(v.name, 40);
       if (tabsList().some(t => t.id !== id && t.name.toLowerCase() === name.toLowerCase())) return 'There’s already a tab with that name.';
@@ -1351,6 +1361,12 @@ function tabDialog(id) {
       commit();
     }
   });
+  const showPos = () => {
+    if (!g) return; const k = state.groups.indexOf(g), b = $$('#dlg [data-x]');
+    if (b[0]) b[0].disabled = k <= 0; if (b[1]) b[1].disabled = k >= state.groups.length - 1;
+    const p = $('#tabPos'); if (p) p.textContent = `Spot ${k + 2} of ${state.groups.length + 1}. Home is always first.`;
+  };
+  if (g && last > 0) { $('#dlg .dlg-err').insertAdjacentHTML('beforebegin', '<p class="hint" id="tabPos" aria-live="polite"></p>'); showPos(); }
 }
 
 /* ---- bringing links in ---- */
@@ -1449,7 +1465,7 @@ window.addEventListener('pointermove', e => {
   }
   const barTop = $('#tabbar').hidden ? innerHeight : $('#tabbar').getBoundingClientRect().top;
   if (e.clientY < 70) window.scrollBy(0, -12); else if (e.clientY > barTop - 60 && e.clientY < barTop) window.scrollBy(0, 12);   /* scroll near the edges, but not while over the tabs */
-  else if (e.clientY >= barTop) { const tabs = $('#tabbar .tabs'); if (tabs) { if (e.clientX < 44) tabs.scrollLeft -= 10; else if (e.clientX > innerWidth - 44) tabs.scrollLeft += 10; } }   /* over the tabs: slide them to reach one that's off screen */
+  else if (e.clientY >= barTop) { const u = document.elementFromPoint(e.clientX, e.clientY), tabs = u && u.closest && u.closest('#tabbar .tabs'); if (tabs) { if (e.clientX < 44) tabs.scrollLeft -= 10; else if (e.clientX > innerWidth - 44) tabs.scrollLeft += 10; } }   /* over the tabs: slide them to reach one that's off screen */
   placeDrag(e);
 }, { passive: false });
 function endDrag(e) {
@@ -1498,6 +1514,7 @@ view.addEventListener('click', e => {
     case 'add': linkDialog(null); break;
     case 'tnew': tabDialog(); break;
     case 'tedit': tabDialog(curTab()); break;
+    case 'rows': state.tabRows = +el.dataset.n === 2 ? 2 : 1; save(); render(); break;
     case 'builtin': addBuiltin(el.dataset.k); break;
     case 'import-text': importTextDialog(); break;
     case 'import-safari': importSafari(); break;
