@@ -178,6 +178,19 @@ dialog::backdrop{background:rgba(10,15,12,.55)}
 .spooky .pumpkins{position:absolute;left:0;right:0;bottom:env(safe-area-inset-bottom);height:70px;opacity:.45}
 @media (prefers-reduced-motion:reduce){.spooky .bat,.spooky .bat svg{animation:none}.spooky .b1{left:20%}.spooky .b2{left:70%}.spooky .b3{left:45%}}
 body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+body.has-tabs{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+/* tabs: fixed at the bottom, always showing; the icons scroll above them */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);padding:8px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(0,0,0,.06)}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 12px;max-width:1100px;margin:0 auto;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--ink);font:inherit;font-size:15px;font-weight:650;cursor:pointer;white-space:nowrap;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tab.drop{outline:3px dashed var(--accent);outline-offset:2px;background:var(--accent-soft);color:var(--ink)}
+.tab-add{min-width:44px;padding:0 12px;font-size:22px;font-weight:500;background:none;border-style:dashed}
+.tab .tab-ed{font-size:12px;opacity:.7;margin-left:4px}
+.tabempty{padding:50px 20px}
+.nbadge{position:absolute;top:-6px;left:calc(50% + 18px);min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#e5484d;color:#fff;font-size:13px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--card)}
+.grid.arrange{min-height:120px}
+
 .hbtn{min-width:44px;padding:0 10px;font-size:18px}
 .search{position:sticky;top:calc(58px + env(safe-area-inset-top));z-index:4;background:var(--bg);padding:10px 0 4px}
 .search input{border-radius:12px;background:var(--card)}
@@ -194,7 +207,7 @@ body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
 .lrow .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lrow .host{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .star{color:#f5b301;font-size:14px;margin-left:4px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;padding:14px 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:14px 6px;padding:14px 8px}
 .gi{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:inherit;min-width:0;position:relative}
 .gi .ico{width:60px;height:60px;border-radius:15px;font-size:24px}
 .gi .ico.emo{font-size:34px}
@@ -205,7 +218,7 @@ body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
 .grid.arrange .gi{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab;animation:wig .28s ease-in-out infinite alternate}
 .grid.arrange .gi:nth-child(2n){animation-delay:-.14s}
 .grid.arrange .gi,.grid.arrange img{-webkit-user-drag:none}
-.grid.arrange .gi.dragging{animation:none;z-index:5;cursor:grabbing;opacity:.92;pointer-events:none}
+.grid.arrange .gi.dragging{animation:none;z-index:30;cursor:grabbing;opacity:.92;pointer-events:none}
 .grid.arrange .gi.dragging .ico{box-shadow:0 10px 30px rgba(0,0,0,.3)}
 @keyframes wig{from{transform:rotate(-1.2deg)}to{transform:rotate(1.2deg)}}
 @media (prefers-reduced-motion:reduce){.grid.arrange .gi{animation:none}}
@@ -347,16 +360,26 @@ a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);col
 .tvmore{padding:0 14px 14px 90px}.tvmore p{margin:0 0 8px;font-size:14.5px;line-height:1.45}
 .tvmore .chips a.chip{text-decoration:none;display:inline-flex;align-items:center}
 @media (max-width:380px){.tvmore{padding-left:14px}}
+/* desktop: a wide window gets bigger icons and more columns (phones and iPad portrait keep the phone layout) */
+@media (min-width:1000px){
+  .nbadge{left:calc(50% + 30px)}
+  body.has-tabs .wrap{max-width:1600px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:24px 10px;padding:22px 14px}
+  .gi{gap:8px}.gi .ico{width:88px;height:88px;border-radius:21px;font-size:34px}.gi .ico.emo{font-size:50px}.gi .ico.l3{font-size:27px}
+  .gi .nm{font-size:14px}.gi .ico.calico b{font-size:16px}.gi .ico.calico span{font-size:42px}.gi .star{right:14px}
+  .tabs{max-width:1600px;padding:0 16px}.tab{min-height:44px;font-size:16px}
+}
 </style>
 </head>
 <body>
 <div class="spooky" aria-hidden="true"><svg class="moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ffe9b0"/><circle cx="38" cy="40" r="7" fill="#f2d48c"/><circle cx="60" cy="62" r="9" fill="#f2d48c"/><circle cx="62" cy="34" r="4" fill="#f2d48c"/></svg><svg class="web" viewBox="0 0 100 100" fill="none" stroke="#e9dcff" stroke-width="1.2"><path d="M0 0L100 30M0 0L80 70M0 0L35 100M0 0L0 100M0 0L100 0"/><path d="M0 22Q12 14 22 0M0 44Q26 30 44 0M0 66Q40 46 66 0M0 88Q55 62 88 0"/></svg><div class="bat b1"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="bat b2"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="bat b3"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="pumpkins"><svg viewBox="0 0 400 70" preserveAspectRatio="xMidYMax meet"><g fill="#ff7a1a"><ellipse cx="60" cy="50" rx="30" ry="20"/><ellipse cx="46" cy="50" rx="14" ry="19" fill="#e96a10"/><ellipse cx="74" cy="50" rx="14" ry="19" fill="#e96a10"/><rect x="57" y="24" width="6" height="10" rx="2" fill="#4a7a2a"/><ellipse cx="340" cy="54" rx="24" ry="16"/><ellipse cx="329" cy="54" rx="11" ry="15" fill="#e96a10"/><ellipse cx="351" cy="54" rx="11" ry="15" fill="#e96a10"/><rect x="337" y="33" width="5" height="9" rx="2" fill="#4a7a2a"/></g><g fill="#2a1200"><path d="M48 44l6 6h-9zM66 44l6 6h-9zM46 58q14 8 28 0l-4 4-3-3-4 4-3-4-4 4-3-3z"/><path d="M332 49l5 5h-8zM345 49l5 5h-8zM330 60q10 6 20 0l-3 3-3-2-2 3-3-3-3 3z"/></g></svg></div></div>
 <header class="top"><div class="wrap"><button type="button" class="btn small ghost hbtn" id="backBtn" hidden aria-label="Back to links">‹</button><div class="grow"><h1 id="title">Links</h1><div class="sub" id="sub"></div></div>
-  <span id="syncSlot"></span><button type="button" class="btn small ghost hbtn" id="viewBtn" aria-label="Switch view"></button>
+  <span id="syncSlot"></span><button type="button" class="btn small ghost hbtn" id="viewBtn" aria-label="Theme">🎨</button>
   <button type="button" class="btn small ghost" id="editBtn">Edit</button>
   <button type="button" class="btn small primary hbtn" id="addBtn" aria-label="Add a link">+</button>
 </div></header>
 <main class="wrap" id="view"></main>
+<nav class="tabbar" id="tabbar" aria-label="Tabs" hidden></nav>
 <script>
 'use strict';
 /* ===================== shared helpers (identical in every Goobs app) ===================== */
@@ -926,7 +949,6 @@ const pickTheme = e => {
   $$('[data-theme-pick]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
 };
 document.addEventListener('click', pickTheme); document.addEventListener('keydown', pickTheme);
-const VIEWS = [['list', 'List with addresses', '☰'], ['icons', 'Big icons by group', '▦'], ['all', 'All icons, no groups (drag to arrange)', '⣿']];
 const APP_ID = 'goobs-links', DB_NAME = 'goobs-links-db', SCHEMA = 1;
 const MAX_LINKS = 2000, MAX_GROUPS = 100, RECENT_N = 4;
 const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a', '#ca8a04', '#0891b2', '#7c3aed', '#db2777', '#4d7c0f', '#b45309'];
@@ -939,7 +961,7 @@ const DRAWN = {
 const drawnOf = e => (/^§(\w+)$/.test(str(e)) && DRAWN[e.slice(1)] ? e.slice(1) : '');
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'list', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], links: [], lastGroup: '' });
+const defaultState = () => ({ v: 1, view: 'all', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], links: [], lastGroup: '', homeName: '', tab: '' });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
 /* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
 const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
@@ -998,7 +1020,7 @@ function normState(s) {
   const ids = new Set(groups.map(g => g.id)), lseen = new Set();
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
-  const out = { v: 1, view: VIEWS.some(v => v[0] === s.view) ? s.view : /^cols/.test(str(s.view)) ? 'all' : 'list', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
+  const out = { v: 1, view: 'all', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', homeName: clampStr(s.homeName, 40), tab: ids.has(str(s.tab)) ? str(s.tab) : '', theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
     builtins: (Array.isArray(s.builtins) ? s.builtins : []).filter(k => APPS[k]), cal: normCal(s.cal), planner: normPlanner(s.planner), rel: normRel(s.rel), tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all',
       by: s.tv && s.tv.by === 'net' ? 'net' : 'time', nets: s.tv && Array.isArray(s.tv.nets) ? [...new Set(s.tv.nets.filter(n => typeof n === 'string').map(n => clampStr(n, 40)).filter(Boolean))].slice(0, 60) : ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] } };
   resort(out); fillAllOrder(out); return out;
@@ -1007,6 +1029,14 @@ function normState(s) {
 function groupedOrder(s = state) { const gi = new Map(s.groups.map((g, i) => [g.id, i])), at = g => (gi.has(g) ? gi.get(g) : 1e9); return s.links.slice().sort((x, y) => at(x.group) - at(y.group) || x.o - y.o); }
 function fillAllOrder(s = state) { if (!s.links.some(l => l.a == null)) return; const max = s.links.reduce((m, l) => (l.a == null ? m : Math.max(m, l.a)), -1); let n = max + 1; for (const l of groupedOrder(s)) if (l.a == null) l.a = n++; }
 const allOrder = () => state.links.slice().sort((x, y) => x.a - y.a || x.o - y.o);
+/* move one link to sit at index i among the links in its tab (only that link's number changes, so only it syncs) */
+function placeInTab(id, i) {
+  const l = linkById(id); if (!l) return;
+  const rest = tabLinks(tabOf(l)).filter(x => x !== l); i = Math.max(0, Math.min(i, rest.length));
+  const prev = rest[i - 1], next = rest[i];
+  l.a = prev && next ? (prev.a + next.a) / 2 : prev ? prev.a + 1 : next ? next.a - 1 : nextAll();
+  commit();
+}
 /* move one link in All icons to sit at index i (only that link's number changes, so only it syncs) */
 function placeInAll(id, i) {
   const list = allOrder(), l = list.find(x => x.id === id); if (!l) return;
@@ -1083,7 +1113,14 @@ let state = defaultState(), db = null;
 const ui = { q: '', edit: false };
 const linkById = id => state.links.find(l => l.id === id) || null;
 const groupById = id => state.groups.find(g => g.id === id) || null;
-const groupName = id => (groupById(id) || { name: 'Other' }).name;
+/* ---- tabs: Home (always first, can't be deleted; holds links with no tab) then your tabs (stored as groups) ---- */
+const HOME = '', HOME_DOC = '__home';
+const tabName = id => (id && groupById(id) ? groupById(id).name : state.homeName || 'Home');
+const groupName = tabName;
+const tabsList = () => [{ id: HOME, name: tabName(HOME) }, ...state.groups];
+const tabOf = l => (groupById(l.group) ? l.group : HOME);
+const curTab = () => (state.tab && groupById(state.tab) ? state.tab : HOME);
+const tabLinks = t => allOrder().filter(l => tabOf(l) === t);
 function save() { if (db) idbPut(db, 'state', JSON.stringify(state)).catch(e => { console.error(e); toast('Couldn’t save on this device.'); }); }
 let committing = false;
 function commit() { save(); committing = true; try { Sync.touch(); } finally { committing = false; } render(); }
@@ -1094,20 +1131,21 @@ const C_GROUPS = 'linkGroups', C_LINKS = 'links', C_TRIPS = 'trips', C_FOLLOWS =
 const syncModel = {
   colls: [C_GROUPS, C_LINKS, C_TRIPS, C_FOLLOWS],
   toEntities() {
-    return [...state.groups.map(g => ({ coll: C_GROUPS, id: g.id, data: { name: g.name, o: g.o } })),
+    return [...state.groups.map(g => ({ coll: C_GROUPS, id: g.id, data: { name: g.name, o: g.o } })), ...(state.homeName ? [{ coll: C_GROUPS, id: HOME_DOC, data: { name: state.homeName, home: true } }] : []),
       ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, img: l.img, note: l.note, added: l.added, o: l.o, a: l.a } })),
       ...state.planner.map(p => ({ coll: C_TRIPS, id: p.id, data: p.data })),
       ...state.rel.follow.map(f => ({ coll: C_FOLLOWS, id: 'm' + f.id, data: { kind: 'movie', ref: f.id, name: f.title, poster: f.poster } })),
       ...state.tv.follow.map(f => ({ coll: C_FOLLOWS, id: 't' + f.id, data: { kind: 'tv', ref: f.id, name: f.name, net: f.net } }))];   /* handed back exactly as Planner wrote them */
   },
   apply(out) {
-    const before = JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow]);
+    const before = JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow, state.homeName]);
     const fl = (out[C_FOLLOWS] || []).map(r => r.data || {});
     state.rel.follow = normRel({ follow: fl.filter(d => d.kind === 'movie').map(d => ({ id: d.ref, title: d.name, poster: d.poster })) }).follow;
     state.tv.follow = normFollow({ follow: fl.filter(d => d.kind === 'tv').map(d => ({ id: d.ref, name: d.name, net: d.net })) });
     state.planner = (out[C_TRIPS] || []).map(r => ({ id: r.id, data: JSON.parse(JSON.stringify(r.data)) }));
     const groups = [], gids = new Set();
-    for (const r of out[C_GROUPS] || []) { const g = normGroup({ ...r.data, id: r.id }); if (g && !gids.has(g.id)) { if (g.o == null) g.o = groups.length; gids.add(g.id); groups.push(g); } }
+    const home = (out[C_GROUPS] || []).find(r => r.id === HOME_DOC); state.homeName = home ? clampStr(home.data && home.data.name, 40) : '';
+    for (const r of out[C_GROUPS] || []) { if (r.id === HOME_DOC) continue; const g = normGroup({ ...r.data, id: r.id }); if (g && !gids.has(g.id)) { if (g.o == null) g.o = groups.length; gids.add(g.id); groups.push(g); } }
     const old = new Map(state.links.map(l => [l.id, l])), links = [], seenId = new Set();
     for (const r of out[C_LINKS] || []) {
       const n = normLink({ ...r.data, id: r.id }, gids); if (!n || seenId.has(n.id)) continue; seenId.add(n.id);
@@ -1119,7 +1157,7 @@ const syncModel = {
     /* the same address added on two devices before they were signed in: keep the first one */
     links.sort(byOrd); const urls = new Set();
     state.groups = groups; state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort(); fillAllOrder();
-    if (JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow]) === before) return;
+    if (JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow, state.homeName]) === before) return;
     relWarm().then(c => { if (c) renderIfSafe(); });
     save(); renderIfSafe();
   }
@@ -1143,87 +1181,84 @@ function ensureGroup(name) {
 
 /* ---- render ---- */
 const view = $('#view');
-function linkHTML(l, mode) {
+function linkHTML(l) {
   const app = appOf(l.url), open = app ? `href="#${app}" data-open="${esc(l.id)}"` : `href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" data-open="${esc(l.id)}"`;
-  if ((mode === 'icons' || mode === 'all') && !ui.edit) return `<a class="gi" ${open}>${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</a>`;
-  const body = `${tileHTML(l)}<div class="main"><div class="nm">${esc(l.name)}${l.fav ? '<span class="star" aria-label="favorite">★</span>' : ''}</div><div class="host">${esc(l.note || (app ? APPS[app].sub() : shortUrl(l.url)))}</div></div>`;
-  if (!ui.edit) return `<a class="lrow" ${open}>${body}</a>`;
-  return `<div class="lrow">${body}<div class="edit-tools"><button type="button" class="btn small" data-act="up" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} up">↑</button><button type="button" class="btn small" data-act="down" data-id="${esc(l.id)}" aria-label="Move ${esc(l.name)} down">↓</button><button type="button" class="btn small" data-act="edit" data-id="${esc(l.id)}">Edit</button></div></div>`;
+  const out = app === 'releases' ? relOutThisWeek().length : 0;   /* a badge when a movie you're watching for is out this week */
+  return `<a class="gi" ${open} title="${esc(app ? APPS[app].sub() : l.note || shortUrl(l.url))}">${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${out ? `<span class="nbadge" aria-label="${out} out this week">${out}</span>` : ''}</a>`;
 }
-const block = (list, mode) => ((mode === 'icons' || mode === 'all') && !ui.edit ? `<div class="card grid">${list.map(l => linkHTML(l, mode)).join('')}</div>` : `<div class="card">${list.map(l => linkHTML(l, mode)).join('')}</div>`);
-function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + groupName(l.group) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
+const block = list => `<div class="card grid">${list.map(linkHTML).join('')}</div>`;
+function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + tabName(tabOf(l)) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
 function render() {
   applyTheme();
   const app = route();
   $('#editBtn').hidden = $('#addBtn').hidden = !!app; $('#backBtn').hidden = !app; $('#syncSlot').hidden = !!app;
+  renderTabs();
   if (app) {
     const l = state.links.find(x => appOf(x.url) === app);
     $('#title').textContent = l ? l.name : APPS[app].name;
-    $('#viewBtn').textContent = '🎨'; $('#viewBtn').setAttribute('aria-label', 'Theme');
     $('#sub').textContent = app === 'tv' ? 'New and live episodes' : app === 'releases' ? 'US digital and disc dates' : app === 'vapay' ? `${vaUi.year} monthly compensation` : '';
     if (app === 'tv') renderTV(); else if (app === 'releases') renderReleases(); else if (app === 'vapay') renderVaPay(); else if (app === 'calc') renderCalc(); else renderCalendar();
     return;
   }
   $('#title').textContent = 'Links';
-  const mode = state.view, total = state.links.filter(l => !appOf(l.url)).length;   /* TV and Calendar don't count */
-  const vw = VIEWS.find(v => v[0] === mode) || VIEWS[0];
-  $('#viewBtn').textContent = vw[2]; $('#viewBtn').setAttribute('aria-label', `View: ${vw[1]}. Change view`);
+  const total = state.links.filter(l => !appOf(l.url)).length;   /* the built-in screens don't count */
   $('#editBtn').textContent = ui.edit ? 'Done' : 'Edit';
   $('#sub').textContent = total ? `${total} link${total === 1 ? '' : 's'}` : '';
   $('#syncSlot').innerHTML = syncBadgeHTML();
-  if (!total && !ui.edit) {
-    const apps = state.links.filter(l => appOf(l.url));
-    view.innerHTML = (apps.length ? block(apps, mode === 'all' ? 'icons' : mode) : '') + `<div class="empty"><div class="big">🔗</div><h2>No links yet</h2><p>Tap <b>+</b> to add one, or bring in a list.</p>
+  const t = curTab(), list = tabLinks(t);
+  if (!total && !ui.edit && t === HOME) {
+    view.innerHTML = (list.length ? block(list) : '') + `<div class="empty"><div class="big">🔗</div><h2>No links yet</h2><p>Tap <b>+</b> to add one, or bring in a list.</p>
       ${Sync.status() === 'signed-out' ? '<p>Already have links on another device? Sign in to bring them here.</p><div class="foot"><button type="button" class="btn primary" data-action="sync-signin">Sign in</button></div>' : ''}
       <div class="foot"><button type="button" class="btn${Sync.status() === 'signed-out' ? '' : ' primary'}" data-act="add">Add a link</button><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="restore">Restore a backup</button></div></div>`;
     return;
   }
   const words = ui.q.toLowerCase().split(/\s+/).filter(Boolean);
-  let html = `<div class="search"><input id="q" type="search" placeholder="Search links" value="${esc(ui.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search links"></div>`;
-  if (words.length) {
-    const hits = state.links.filter(l => matches(l, words));
-    html += hits.length ? `<div class="sec-h"><span>Results</span><span>${hits.length}</span></div>${block(hits, mode)}` : '<div class="empty"><h2>No matches</h2></div>';
+  let html = `<div class="search"><input id="q" type="search" placeholder="Search all tabs" value="${esc(ui.q)}" autocomplete="off" autocapitalize="none" enterkeyhint="search" aria-label="Search links in all tabs"></div>`;
+  if (words.length) {   /* search looks in every tab; results are listed under their tab */
+    const hits = allOrder().filter(l => matches(l, words));
+    if (!hits.length) html += '<div class="empty"><h2>No matches</h2></div>';
+    for (const x of tabsList()) { const h = hits.filter(l => tabOf(l) === x.id); if (h.length) html += `<div class="sec-h"><span>${esc(x.name)}</span><span>${h.length}</span></div>${block(h)}`; }
     view.innerHTML = html; return;
   }
-  if (mode === 'all') {
-    const list = allOrder();
-    if (ui.edit) html += `<p class="arrange-tip">Drag icons to rearrange · tap one to edit it</p><div class="card grid arrange" id="allGrid">${list.map(l => `<a class="gi" href="#" data-id="${esc(l.id)}">${tileHTML(l)}<span class="nm">${esc(l.name)}</span></a>`).join('')}</div>`;
-    else html += block(list, 'icons');
-    if (ui.edit) html += toolsHTML(false);
-    else html += `<p class="hint c" style="margin-top:22px">Site icons: the site’s own icon, else DuckDuckGo’s icon service.</p>`;
-    view.innerHTML = html; return;
-  }
-  const tools = state.links.filter(l => appOf(l.url) && !l.group);   /* ungrouped TV / Calendar sit at the top */
-  if (tools.length && !ui.edit) html += block(tools, mode);
-  if (!ui.edit) {
-    const favs = state.links.filter(l => l.fav);
-    if (favs.length) html += `<div class="sec-h"><span>Favorites</span></div>${block(favs, mode)}`;
-    const recent = state.links.filter(l => l.opened && !l.fav && !appOf(l.url)).sort((a, b) => b.opened - a.opened).slice(0, RECENT_N);
-    if (recent.length) html += `<div class="sec-h"><span>Recent</span></div>${block(recent, mode)}`;
-  }
-  const groups = [...state.groups.map(g => [g.id, g.name]), ['', 'Other']];
-  for (const [gid, gname] of groups) {
-    const list = state.links.filter(l => l.group === gid && (gid || ui.edit || !appOf(l.url)));
-    if (!list.length && !(ui.edit && gid)) continue;
-    const tools = ui.edit && gid ? `<span class="edit-tools"><button type="button" class="btn small" data-act="gup" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} up">↑</button><button type="button" class="btn small" data-act="gdown" data-g="${esc(gid)}" aria-label="Move group ${esc(gname)} down">↓</button><button type="button" class="btn small" data-act="gedit" data-g="${esc(gid)}">Rename</button></span>` : `<span>${list.length}</span>`;
-    html += `<div class="sec-h gh"><span class="grow">${esc(gname)}</span>${tools}</div>${list.length ? block(list, mode) : '<p class="hint" style="margin:0 4px">Empty group. Delete it from Rename.</p>'}`;
-  }
-  if (ui.edit) html += toolsHTML(true);
-  else html += `<p class="hint c" style="margin-top:22px">Site icons: the site’s own icon, else DuckDuckGo’s icon service.</p>`;
+  if (ui.edit) {
+    html += `<p class="arrange-tip">Drag icons to rearrange, or onto a tab below to move them there. Tap an icon to edit it, a tab to rename it.</p><div class="card grid arrange" id="allGrid">${list.map(l => `<a class="gi" href="#" data-id="${esc(l.id)}">${tileHTML(l)}<span class="nm">${esc(l.name)}</span></a>`).join('')}</div>`;
+    html += toolsHTML();
+  } else if (list.length) html += block(list);
+  else html += `<div class="empty tabempty"><h2>Nothing in ${esc(tabName(t))} yet</h2><p>Tap <b>+</b> to add a link here, or tap Edit and drag icons onto this tab.</p></div>`;
   view.innerHTML = html;
 }
-function toolsHTML(groups) {
+/* the tab bar: always at the bottom of the links screen */
+let shownTab = null;
+function renderTabs() {
+  const bar = $('#tabbar'), app = route();
+  bar.hidden = !!app; document.body.classList.toggle('has-tabs', !app);
+  if (app) return;
+  const t = curTab(), keep = $('.tabs', bar) ? $('.tabs', bar).scrollLeft : 0;
+  bar.innerHTML = `<div class="tabs" role="tablist">${tabsList().map(x => `<button type="button" class="tab" role="tab" data-tab="${esc(x.id)}" aria-selected="${x.id === t}">${esc(x.name)}${ui.edit ? '<span class="tab-ed" aria-hidden="true">✎</span>' : ''}</button>`).join('')}<button type="button" class="tab tab-add" data-tab-add aria-label="Add a tab">+</button></div>`;
+  const tabs = $('.tabs', bar); tabs.scrollLeft = keep;
+  if (shownTab !== t) { shownTab = t; const b = $('.tab[aria-selected="true"]', bar); if (b && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+}
+function showTab(id) {
+  if (id === curTab()) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  state.tab = id; ui.q = ''; save(); render(); window.scrollTo(0, 0);
+}
+/* a link dropped on another tab goes to the end of that tab */
+function moveToTab(id, tab) {
+  const l = linkById(id); if (!l || tabOf(l) === tab) return;
+  l.group = tab; l.a = nextAll(); commit(); toast(`Moved ${l.name} to ${tabName(tab)}`);
+}
+function toolsHTML() {
   const missing = Object.keys(APPS).filter(k => !state.links.some(l => appOf(l.url) === k));
-  return `${groups ? '<div class="foot"><button type="button" class="btn" data-act="gnew">New group</button></div>' : ''}
+  return `<div class="foot"><button type="button" class="btn" data-act="tnew">New tab</button><button type="button" class="btn" data-act="tedit">Rename this tab</button></div>
     ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${{ tv: '📺', calendar: '📅', releases: '📀', vapay: '🎖️', calc: '🧮' }[k]} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
     <div class="sec-h"><span>Bring in and back up</span></div>
     <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
-    <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links stay the same everywhere. Recent and the view you pick stay per device.')}
-    <p class="hint c">Links are also kept on this device and included in Goobs “Back up all apps.”</p>`;
+    <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links and tabs stay the same everywhere. The tab you’re on and the theme stay per device.')}
+    <p class="hint c">Site icons: the site’s own icon, else DuckDuckGo’s icon service. Links are also kept on this device and included in Goobs “Back up all apps.”</p>`;
 }
 
 /* ---- add / edit ---- */
-function groupOptions() { return [...state.groups.map(g => [g.id, g.name]), ['', 'Other (no group)'], ['__new', 'New group…']]; }
+function groupOptions() { return [...tabsList().map(t => [t.id, t.name]), ['__new', 'New tab…']]; }
 function linkDialog(l) {
   const isNew = !l, pick = { img: l && l.img ? l.img : '' };   /* your own image, if you pick one (the emoji box holds the other choices) */
   formDialog({
@@ -1231,11 +1266,10 @@ function linkDialog(l) {
     fields: [
       { name: 'url', label: 'Address', type: 'url', required: true, value: l ? l.url : '', placeholder: 'espn.com or paste a link', capitalize: 'none', autocomplete: 'off' },
       { name: 'name', label: 'Name', value: l ? l.name : '', placeholder: 'Filled in from the address' },
-      { name: 'group', label: 'Group', type: 'select', value: l ? l.group : state.lastGroup, options: groupOptions() },
-      { name: 'newGroup', label: 'New group name', value: '', placeholder: 'Only if you picked New group…' },
-      { name: 'fav', label: '★ Favorite (shown at the top)', type: 'checkbox', value: l ? l.fav : false },
+      { name: 'group', label: 'Tab', type: 'select', value: l ? tabOf(l) : curTab(), options: groupOptions() },
+      { name: 'newGroup', label: 'New tab name', value: '', placeholder: 'Only if you picked New tab…' },
       { name: 'emoji', label: 'Icon', value: l ? l.emoji : '' },
-      { name: 'note', label: 'Note (optional, shown under the name)', value: l ? l.note : '' }
+      { name: 'note', label: 'Note (optional, found by search)', value: l ? l.note : '' }
     ],
     submitLabel: isNew ? 'Save' : 'Save',
     extra: [{ label: 'Paste link', onClick: () => pasteInto() }],
@@ -1244,12 +1278,11 @@ function linkDialog(l) {
       const url = linkUrl(v.url); if (!url) return 'Enter a web address, like espn.com or https://…';
       const dup = state.links.find(x => x.url === url && x !== l); if (dup) return `That address is already saved as “${dup.name}”.`;
       let group = v.group;
-      if (group === '__new') { group = ensureGroup(v.newGroup); if (!group) return 'Type a name for the new group.'; }
-      else if (v.newGroup.trim()) group = ensureGroup(v.newGroup);
-      const rec = { name: clampStr(v.name, 60) || autoName(url), url, group, emoji: pick.img ? '' : clampStr(v.emoji, 16), img: pick.img, note: clampStr(v.note, 300), fav: v.fav };
-      if (l) { if (l.url !== url) { l.icon = ''; l.iconAt = 0; } Object.assign(l, rec); }
+      if (group === '__new') { group = ensureGroup(v.newGroup); if (!group) return 'Type a name for the new tab.'; }
+      const rec = { name: clampStr(v.name, 60) || autoName(url), url, group, emoji: pick.img ? '' : clampStr(v.emoji, 16), img: pick.img, note: clampStr(v.note, 300) };
+      if (l) { if (l.url !== url) { l.icon = ''; l.iconAt = 0; } if (tabOf(l) !== group) l.a = nextAll(); Object.assign(l, rec); }
       else { if (state.links.length >= MAX_LINKS) return 'That’s the most links this app holds.'; state.links.push(normLink({ ...rec, id: uid(), added: Date.now(), o: nextOrd(state.links), a: nextAll() }, new Set(state.groups.map(g => g.id)))); }
-      state.lastGroup = group; commit(); if (isNew) toast(`Added ${rec.name}`);
+      commit(); if (isNew) toast(group === curTab() ? `Added ${rec.name}` : `Added ${rec.name} to ${tabName(group)}`);
     }
   });
   /* the name follows the address until you type your own */
@@ -1260,8 +1293,7 @@ function linkDialog(l) {
   if (l && appOf(l.url)) { fieldOf('url').hidden = true; $$('#dlg [data-x]').forEach(b => { b.hidden = true; }); $('#dlg h2').textContent = `Edit ${APPS[appOf(l.url)].name} (built in)`; }
   const grpSync = () => { fieldOf('newGroup').hidden = f.elements.group.value !== '__new'; if (!fieldOf('newGroup').hidden) f.elements.newGroup.focus(); };
   f.elements.group.addEventListener('change', grpSync); fieldOf('newGroup').hidden = f.elements.group.value !== '__new';
-  const extras = [fieldOf('emoji'), fieldOf('note')], open = !!(l && (l.emoji || l.img || l.note));
-  if (!open) { extras.forEach(x => { x.hidden = true; }); fieldOf('note').insertAdjacentHTML('afterend', '<button type="button" class="btn small ghost more-btn" id="moreBtn">More options: icon, note</button>'); $('#moreBtn').onclick = () => { extras.forEach(x => { x.hidden = false; }); $('#moreBtn').remove(); }; }
+  if (!(l && l.note)) { fieldOf('note').hidden = true; fieldOf('note').insertAdjacentHTML('afterend', '<button type="button" class="btn small ghost more-btn" id="moreBtn">Add a note</button>'); $('#moreBtn').onclick = () => { fieldOf('note').hidden = false; $('#moreBtn').remove(); f.elements.note.focus(); }; }
   /* icon: a preview and a button that opens the picker (drawn icons, emoji, your own image) */
   const emoEl = f.elements.emoji; emoEl.type = 'hidden';
   emoEl.insertAdjacentHTML('afterend', `<div class="icon-row"><span id="icoPrev"></span><button type="button" class="btn small" id="icoPick">Choose icon…</button><button type="button" class="btn small ghost" id="icoReset">Use site icon</button></div>`);
@@ -1287,31 +1319,35 @@ function removeLink(l) {
   state.links.splice(i, 1); commit();
   toast(`Deleted ${l.name}`, { label: 'Undo', fn: () => { if (!linkById(l.id)) { state.links.push(l); resort(); } commit(); } });
 }
-function moveLink(id, dir) {
-  const l = linkById(id); if (!l) return;
-  const same = state.links.filter(x => x.group === l.group), k = same.indexOf(l), other = same[k + dir];
-  if (!other) return;
-  [l.o, other.o] = [other.o, l.o]; resort(); commit();
-}
 function moveGroup(id, dir) {
   const i = state.groups.findIndex(g => g.id === id), j = i + dir;
   if (i < 0 || j < 0 || j >= state.groups.length) return;
   const a = state.groups[i], b = state.groups[j]; [a.o, b.o] = [b.o, a.o]; resort(); commit();
 }
-function groupDialog(g) {
+/* add a tab (id undefined) or rename / move / delete one. Home is always first and can't be deleted. */
+function tabDialog(id) {
+  const isNew = id === undefined, home = id === HOME, g = !isNew && !home ? groupById(id) : null;
+  if (!isNew && !home && !g) return;
+  const i = g ? state.groups.indexOf(g) : -1, last = state.groups.length - 1;
   formDialog({
-    title: g ? 'Rename group' : 'New group',
-    fields: [{ name: 'name', label: 'Group name', required: true, value: g ? g.name : '' }],
+    title: isNew ? 'New tab' : 'Rename tab',
+    intro: home ? 'Home is always the first tab and can’t be deleted. Links without a tab live here.' : '',
+    fields: [{ name: 'name', label: 'Tab name', required: true, value: isNew ? '' : tabName(id), placeholder: 'e.g. Work, Media, Shopping' }],
+    extra: g ? [...(i > 0 ? [{ label: '‹ Move', onClick: () => { $('#dlg').close(); moveGroup(g.id, -1); } }] : []), ...(i < last ? [{ label: 'Move ›', onClick: () => { $('#dlg').close(); moveGroup(g.id, 1); } }] : [])] : [],
     onDelete: g ? async () => {
-      const n = state.links.filter(l => l.group === g.id).length;
-      if (n && !(await confirmBox(`Delete “${g.name}”?`, `Its ${n} link${n === 1 ? '' : 's'} move to Other. Nothing is deleted.`, 'Delete group'))) return false;
-      state.links.forEach(l => { if (l.group === g.id) l.group = ''; }); state.groups = state.groups.filter(x => x !== g); commit(); return true;
+      const n = state.links.filter(l => tabOf(l) === g.id).length;
+      if (n && !(await confirmBox(`Delete the “${g.name}” tab?`, `Its ${n} link${n === 1 ? '' : 's'} move to ${tabName(HOME)}. No links are deleted.`, 'Delete tab'))) return false;
+      state.links.forEach(l => { if (l.group === g.id) { l.group = HOME; l.a = nextAll(); } });
+      state.groups = state.groups.filter(x => x !== g); if (state.tab === g.id) state.tab = HOME; commit(); return true;
     } : null,
-    deleteLabel: 'Delete group',
+    deleteLabel: 'Delete tab',
+    submitLabel: isNew ? 'Add tab' : 'Save',
     onSubmit: v => {
-      const name = clampStr(v.name, 40), clash = state.groups.find(x => x !== g && x.name.toLowerCase() === name.toLowerCase());
-      if (clash) return 'There’s already a group with that name.';
-      if (g) g.name = name; else { if (state.groups.length >= MAX_GROUPS) return 'That’s the most groups this app holds.'; state.groups.push({ id: uid(), name, o: nextOrd(state.groups) }); }
+      const name = clampStr(v.name, 40);
+      if (tabsList().some(t => t.id !== id && t.name.toLowerCase() === name.toLowerCase())) return 'There’s already a tab with that name.';
+      if (home) state.homeName = name === 'Home' ? '' : name;
+      else if (g) g.name = name;
+      else { if (state.groups.length >= MAX_GROUPS) return 'That’s the most tabs this app holds.'; const ng = { id: uid(), name, o: nextOrd(state.groups) }; state.groups.push(ng); state.tab = ng.id; }
       commit();
     }
   });
@@ -1348,7 +1384,7 @@ function addMany(items) {
   for (const it of items) {
     if (state.links.length >= MAX_LINKS) break;
     if (state.links.some(l => l.url === it.url)) { skipped++; continue; }
-    const group = it.group ? ensureGroup(it.group) : '';
+    const group = it.group ? ensureGroup(it.group) : curTab();
     state.links.push(normLink({ id: uid(), name: it.name || autoName(it.url), url: it.url, group, emoji: it.emoji || '', added: Date.now(), o: nextOrd(state.links), a: null }, new Set(state.groups.map(g => g.id))));
     added++;
   }
@@ -1359,7 +1395,7 @@ function addMany(items) {
 function importTextDialog() {
   formDialog({
     title: 'Paste a list',
-    intro: 'One link per line: “Name | address”, optionally “| emoji” for the icon. A line starting with # starts a group. Links you already have are skipped.',
+    intro: 'One link per line: “Name | address”, optionally “| emoji” for the icon. A line starting with # starts a tab (the rest go in this tab). Links you already have are skipped.',
     fields: [{ name: 'text', label: 'List', type: 'textarea', value: '', placeholder: '# Media\nRadarr | http://mediapc:7878/\n# Forums\nNP | https://www.tivocommunity.com/…' }],
     submitLabel: 'Add these',
     onSubmit: v => { const items = parseList(v.text); if (!items.length) return 'No web addresses found in that text.'; addMany(items); }
@@ -1370,7 +1406,7 @@ async function importSafari() {
   const f = await pickFile('.html,.htm,text/html'); if (!f) return;
   const items = parseBookmarksHtml(await readFileText(f));
   if (!items.length) { msgBox('No bookmarks found', 'That file has no bookmarks in it. In Safari on the Mac, use File › Export Bookmarks.'); return; }
-  if (await confirmBox(`Add ${items.length} bookmarks?`, 'Folders become groups. Ones you already have are skipped.', 'Add them', false)) addMany(items);
+  if (await confirmBox(`Add ${items.length} bookmarks?`, 'Folders become tabs; the rest go in this tab. Ones you already have are skipped.', 'Add them', false)) addMany(items);
 }
 async function doBackup() {
   const text = await Backup.build({ appId: APP_ID, schema: SCHEMA, data: { ...state, planner: [] } });   /* Planner's records are Planner's to back up */
@@ -1387,45 +1423,68 @@ async function doRestore() {
 }
 
 /* ---- events ---- */
-/* ---- All icons: drag to rearrange (pointer events, so a finger works on iPhone as well as a mouse) ---- */
+/* ---- Edit: drag icons to rearrange, or onto a tab to move them there (pointer events: a finger works on iPhone as well as a mouse) ---- */
 let drag = null;
 const placeDrag = e => { drag.el.style.transform = ''; const r = drag.el.getBoundingClientRect(); drag.el.style.transform = `translate(${e.clientX - drag.ox - r.left}px,${e.clientY - drag.oy - r.top}px)`; };
+/* the tab under the finger, if any */
+const tabAt = (x, y) => { const u = document.elementFromPoint(x, y), t = u && u.closest && u.closest('#tabbar [data-tab]'); return t || null; };
 view.addEventListener('pointerdown', e => {
   const grid = $('#allGrid'); if (!grid || drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
   const a = e.target.closest('#allGrid .gi'); if (!a) return;
   e.preventDefault();
   const r = a.getBoundingClientRect();
-  drag = { el: a, id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top, moved: false, last: null };
+  drag = { el: a, id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top, moved: false, last: null, tab: null };
 });
 window.addEventListener('pointermove', e => {
   if (!drag || e.pointerId !== drag.id) return;
   if (!drag.moved) { if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 8) return; drag.moved = true; drag.el.classList.add('dragging'); }
   e.preventDefault();
-  const grid = $('#allGrid'), under = document.elementFromPoint(e.clientX, e.clientY), t = under && under.closest && under.closest('#allGrid .gi');
+  const tb = tabAt(e.clientX, e.clientY);
+  if (tb !== drag.tab) { if (drag.tab) drag.tab.classList.remove('drop'); drag.tab = tb && tb.dataset.tab !== curTab() ? tb : null; if (drag.tab) drag.tab.classList.add('drop'); }
+  const grid = $('#allGrid'), under = !tb && document.elementFromPoint(e.clientX, e.clientY), t = under && under.closest && under.closest('#allGrid .gi');
   if (t !== drag.last) drag.last = null;
   if (t && t !== drag.el && t !== drag.last) {   /* swap once per icon entered, so one that just slid under the finger doesn't flip back */
     drag.last = t; const cs = [...grid.children], from = cs.indexOf(drag.el), to = cs.indexOf(t);
     grid.insertBefore(drag.el, from < to ? t.nextSibling : t);
   }
-  if (e.clientY < 70) window.scrollBy(0, -12); else if (e.clientY > innerHeight - 70) window.scrollBy(0, 12);
+  const barTop = $('#tabbar').hidden ? innerHeight : $('#tabbar').getBoundingClientRect().top;
+  if (e.clientY < 70) window.scrollBy(0, -12); else if (e.clientY > barTop - 60 && e.clientY < barTop) window.scrollBy(0, 12);   /* scroll near the edges, but not while over the tabs */
+  else if (e.clientY >= barTop) { const tabs = $('#tabbar .tabs'); if (tabs) { if (e.clientX < 44) tabs.scrollLeft -= 10; else if (e.clientX > innerWidth - 44) tabs.scrollLeft += 10; } }   /* over the tabs: slide them to reach one that's off screen */
   placeDrag(e);
 }, { passive: false });
 function endDrag(e) {
   if (!drag || (e && e.pointerId !== drag.id)) return;
   const d = drag; drag = null; d.el.classList.remove('dragging'); d.el.style.transform = '';
+  if (d.tab) d.tab.classList.remove('drop');
   if (!d.moved) { if (e && e.type === 'pointerup') { const l = linkById(d.el.dataset.id); if (l) linkDialog(l); } return; }
-  const grid = $('#allGrid'); placeInAll(d.el.dataset.id, grid ? [...grid.children].indexOf(d.el) : 0);
+  if (d.tab && e && e.type === 'pointerup') { moveToTab(d.el.dataset.id, d.tab.dataset.tab); return; }
+  const grid = $('#allGrid'); placeInTab(d.el.dataset.id, grid ? [...grid.children].indexOf(d.el) : 0);
 }
 window.addEventListener('pointerup', endDrag); window.addEventListener('pointercancel', endDrag);
 view.addEventListener('click', e => { if (e.target.closest('#allGrid')) e.preventDefault(); }, true);
 view.addEventListener('contextmenu', e => { if (e.target.closest('#allGrid')) e.preventDefault(); });
 
+/* ---- the tab bar: tap to switch, tap the one you're on to go to the top, press and hold (or tap in Edit) to rename ---- */
+let tabHold = null, tabHeld = false;
+$('#tabbar').addEventListener('pointerdown', e => {
+  const b = e.target.closest('[data-tab]'); if (!b || drag) return;
+  tabHeld = false; clearTimeout(tabHold && tabHold.t);
+  tabHold = { x: e.clientX, y: e.clientY, t: setTimeout(() => { tabHeld = true; tabHold = null; tabDialog(b.dataset.tab); }, 550) };
+});
+const tabUnhold = () => { if (tabHold) { clearTimeout(tabHold.t); tabHold = null; } };
+$('#tabbar').addEventListener('pointermove', e => { if (tabHold && Math.hypot(e.clientX - tabHold.x, e.clientY - tabHold.y) > 8) tabUnhold(); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => $('#tabbar').addEventListener(t, tabUnhold));
+$('#tabbar').addEventListener('contextmenu', e => e.preventDefault());
+$('#tabbar').addEventListener('click', e => {
+  if (tabHeld) { tabHeld = false; return; }   /* the press-and-hold already opened Rename */
+  if (e.target.closest('[data-tab-add]')) { tabDialog(); return; }
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  if (ui.edit) { if (b.dataset.tab === curTab()) tabDialog(b.dataset.tab); else showTab(b.dataset.tab); return; }
+  showTab(b.dataset.tab);
+});
+
 $('#addBtn').onclick = () => linkDialog(null);
-$('#viewBtn').onclick = async () => {
-  if (route()) { await askDialog({ title: 'Theme', body: `<p class="muted">Each device keeps its own theme.</p>${themesHTML()}`, buttons: [{ label: 'Done', value: null, kind: 'primary' }] }); return; }
-  const v = await askDialog({ title: 'View and theme', body: `<p class="muted">Each device keeps its own choice of view and theme.</p><h3>Theme</h3>${themesHTML()}<h3>View</h3>`, buttons: [...VIEWS.map(([k, label, sym]) => ({ label: `${sym}  ${label}${k === state.view ? '  ✓' : ''}`, value: k, kind: k === state.view ? 'primary' : '' })), { label: 'Cancel', value: null, kind: 'ghost' }] });
-  if (v && v !== state.view) { state.view = v; save(); render(); }
-};
+$('#viewBtn').onclick = () => askDialog({ title: 'Theme', body: `<p class="muted">Each device keeps its own theme.</p>${themesHTML()}`, buttons: [{ label: 'Done', value: null, kind: 'primary' }] });
 $('#editBtn').onclick = () => { ui.edit = !ui.edit; render(); };
 /* TV and Calendar are #tv and #calendar, so the phone's back swipe works too */
 $('#backBtn').onclick = () => { if (ui.fromLinks) history.back(); else { history.replaceState(null, '', location.pathname + location.search); render(); } };
@@ -1433,18 +1492,12 @@ window.addEventListener('hashchange', () => { if (!route()) ui.fromLinks = false
 document.addEventListener('click', e => { const s = e.target.closest('[data-action^="sync-"]'); if (s) { e.preventDefault(); syncAction(s.dataset.action); } });
 view.addEventListener('click', e => {
   const open = e.target.closest('[data-open]');
-  if (open) { const l = linkById(open.dataset.open); if (l) { l.opened = Date.now(); l.uses++; save(); if (appOf(l.url)) { ui.fromLinks = true; window.scrollTo(0, 0); } else setTimeout(render, 300); } return; }
+  if (open) { const l = linkById(open.dataset.open); if (l) { l.opened = Date.now(); l.uses++; save(); if (appOf(l.url)) { ui.fromLinks = true; window.scrollTo(0, 0); } } return; }
   const el = e.target.closest('[data-act]'); if (!el) return;
-  const id = el.dataset.id, g = el.dataset.g;
   switch (el.dataset.act) {
     case 'add': linkDialog(null); break;
-    case 'edit': { const l = linkById(id); if (l) linkDialog(l); break; }
-    case 'up': moveLink(id, -1); break;
-    case 'down': moveLink(id, 1); break;
-    case 'gup': moveGroup(g, -1); break;
-    case 'gdown': moveGroup(g, 1); break;
-    case 'gedit': { const x = groupById(g); if (x) groupDialog(x); break; }
-    case 'gnew': groupDialog(null); break;
+    case 'tnew': tabDialog(); break;
+    case 'tedit': tabDialog(curTab()); break;
     case 'builtin': addBuiltin(el.dataset.k); break;
     case 'import-text': importTextDialog(); break;
     case 'import-safari': importSafari(); break;
