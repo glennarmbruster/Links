@@ -1293,7 +1293,7 @@ function toolsHTML() {
     <div class="sec-h"><span>Tab bar on this device</span></div><div class="seg" role="group" aria-label="Tab bar rows"><button type="button" class="chip" data-act="rows" data-n="1" aria-pressed="${state.tabRows !== 2}">One row</button><button type="button" class="chip" data-act="rows" data-n="2" aria-pressed="${state.tabRows === 2}">Two rows</button></div>
     ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${{ tv: '📺', calendar: '📅', releases: '📀', vapay: '🎖️', calc: '🧮' }[k]} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
     <div class="sec-h"><span>Bring in and back up</span></div>
-    <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
+    <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="copy-tab">Copy this tab as a list</button><button type="button" class="btn" data-act="copy-all">Copy all tabs as a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
     <div class="sec-h"><span>Sync</span></div>${syncCardHTML('Sign in with the same account on your phone, iPad and computers and your links and tabs stay the same everywhere. The tab you’re on and the theme stay per device.')}
     <p class="hint c">Site icons: the site’s own icon, else DuckDuckGo’s icon service. Links are also kept on this device and included in Goobs “Back up all apps.”</p>`;
 }
@@ -1457,14 +1457,15 @@ function tabDialog(id) {
 /* ---- bringing links in ---- */
 /* pasted list: "# Group" lines start a group; each other line is "Name | address" (optionally "| emoji"), "Name address" or just an address */
 function parseList(text) {
-  const out = []; let group = '';
+  const out = []; let group = '', sec = '';
   for (const raw of str(text).split(/\r?\n/)) {
     const line = raw.trim(); if (!line) continue;
-    const gm = line.match(/^#+\s*(.+)$/); if (gm) { group = gm[1].trim().slice(0, 40); continue; }
+    const sm = line.match(/^##+\s*(.+)$/); if (sm) { sec = sm[1].trim().slice(0, 40); continue; }   /* ## starts a section in the current tab */
+    const gm = line.match(/^#\s*(.+)$/); if (gm) { group = gm[1].trim().slice(0, 40); sec = ''; continue; }
     let name = '', addr = '', emoji = '';
     if (line.includes('|')) { const p = line.split('|').map(x => x.trim()); name = p[0]; addr = p[1] || ''; emoji = p[2] || ''; }
     else { const m = line.match(/^(.*?)\s*((?:https?:\/\/)?[^\s]+\.[^\s]+|https?:\/\/[^\s]+)$/i); if (m) { name = m[1].trim(); addr = m[2]; } else addr = line; }
-    const url = linkUrl(addr); if (url) out.push({ name: name.slice(0, 60), url, group, emoji: emoji.slice(0, 16) });
+    const url = linkUrl(addr); if (url) out.push({ name: name.slice(0, 60), url, group, sec, emoji: emoji.slice(0, 16) });
   }
   return out;
 }
@@ -1486,17 +1487,45 @@ function addMany(items) {
     if (state.links.length >= MAX_LINKS) break;
     if (state.links.some(l => l.url === it.url)) { skipped++; continue; }
     const group = it.group ? ensureGroup(it.group) : curTab();
-    state.links.push(normLink({ id: uid(), name: it.name || autoName(it.url), url: it.url, group, emoji: it.emoji || '', added: Date.now(), o: nextOrd(state.links), a: null }, new Set(state.groups.map(g => g.id))));
+    let sec = '';
+    if (it.sec) { const hit = secsOf(group).find(x => x.name.toLowerCase() === it.sec.toLowerCase()); sec = hit ? hit.id : makeSection(group, it.sec); }
+    state.links.push(normLink({ id: uid(), name: it.name || autoName(it.url), url: it.url, group, sec, emoji: it.emoji || '', added: Date.now(), o: nextOrd(state.links), a: null }, new Set(state.groups.map(g => g.id))));
     added++;
   }
   fillAllOrder();   /* a pasted batch lands at the end of All icons in its grouped order */
   commit();
   toast(`Added ${added} link${added === 1 ? '' : 's'}${skipped ? ` · ${skipped} already saved` : ''}`);
 }
+/* the same "Name | address | icon" list, to paste into another app (Links EX, Links FH) or keep */
+function listText(all) {
+  const line = l => `${l.name.replace(/\|/g, '/')} | ${l.url}${l.emoji ? ' | ' + l.emoji : ''}`, out = [];
+  for (const t of all ? tabsList() : [{ id: curTab(), name: tabName(curTab()) }]) {
+    const ls = tabLinks(t.id).filter(l => !appOf(l.url)); if (!ls.length) continue;
+    if (all && t.id !== HOME) out.push('', '# ' + t.name);   /* Home's links come first with no heading: they land in the tab you paste into */
+    const top = secLinks(t.id, '').filter(l => !appOf(l.url)); top.forEach(l => out.push(line(l)));
+    for (const x of secsOf(t.id)) { const sl = secLinks(t.id, x.id).filter(l => !appOf(l.url)); if (sl.length) { out.push('## ' + x.name); sl.forEach(l => out.push(line(l))); } }
+  }
+  return out.join('\n').trim();
+}
+function exportListDialog(all) {
+  const text = listText(all), n = text.split('\n').filter(x => x && !x.startsWith('#')).length;
+  if (!n) { msgBox('Nothing to copy', all ? 'There are no links yet.' : 'This tab has no links.'); return; }
+  formDialog({
+    title: all ? `Copy all tabs (${n} links)` : `Copy ${tabName(curTab())} (${n} links)`,
+    intro: 'Delete any lines you don’t want, then Copy. In the other app: Edit → Paste a list. # lines become tabs and ## lines sections. Icons you uploaded yourself don’t come along; drawn icons and emoji do.',
+    fields: [{ name: 'text', label: 'List', type: 'textarea', value: text }],
+    submitLabel: 'Copy',
+    onSubmit: async v => {
+      try { await navigator.clipboard.writeText(v.text); toast('Copied. Now open the other app: Edit → Paste a list.'); }
+      catch { return 'Couldn’t copy automatically. Select the text and copy it.'; }
+    }
+  });
+  const ta = $('#dlg textarea'); if (ta) ta.classList.add('big');
+}
 function importTextDialog() {
   formDialog({
     title: 'Paste a list',
-    intro: 'One link per line: “Name | address”, optionally “| emoji” for the icon. A line starting with # starts a tab (the rest go in this tab). Links you already have are skipped.',
+    intro: 'One link per line: “Name | address”, optionally “| icon”. A line starting with # starts a tab, ## starts a section in it (lines before any # go in this tab). Links you already have are skipped.',
     fields: [{ name: 'text', label: 'List', type: 'textarea', value: '', placeholder: '# Media\nRadarr | http://mediapc:7878/\n# Forums\nNP | https://www.tivocommunity.com/…' }],
     submitLabel: 'Add these',
     onSubmit: v => { const items = parseList(v.text); if (!items.length) return 'No web addresses found in that text.'; addMany(items); }
@@ -1612,6 +1641,8 @@ view.addEventListener('click', e => {
     case 'rows': state.tabRows = +el.dataset.n === 2 ? 2 : 1; save(); render(); break;
     case 'builtin': addBuiltin(el.dataset.k); break;
     case 'import-text': importTextDialog(); break;
+    case 'copy-tab': exportListDialog(false); break;
+    case 'copy-all': exportListDialog(true); break;
     case 'import-safari': importSafari(); break;
     case 'backup': doBackup(); break;
     case 'restore': doRestore(); break;
