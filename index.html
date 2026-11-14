@@ -193,6 +193,11 @@ body.has-tabs .toast{bottom:calc(90px + env(safe-area-inset-bottom))}body.has-ta
 .tabempty{padding:50px 20px}
 .nbadge{position:absolute;top:-6px;left:calc(50% + 18px);min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#e5484d;color:#fff;font-size:13px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--card)}
 .grid.arrange{min-height:120px}
+/* sections inside a tab */
+.grid.arrange.sec{min-height:96px}
+.grid.arrange:empty::before{content:attr(data-empty);grid-column:1/-1;align-self:center;text-align:center;color:var(--muted);font-size:14px;padding:18px 0}
+.sec-h.sec-ed{align-items:center}.sec-h.sec-ed .btn{text-transform:none;letter-spacing:0;font-size:14px}
+.secempty{padding:18px;text-align:center;color:var(--muted);font-size:14px}
 
 .hbtn{min-width:44px;padding:0 10px;font-size:18px}
 .search{position:sticky;top:calc(58px + env(safe-area-inset-top));z-index:4;background:var(--bg);padding:10px 0 4px}
@@ -953,7 +958,7 @@ const pickTheme = e => {
 };
 document.addEventListener('click', pickTheme); document.addEventListener('keydown', pickTheme);
 const APP_ID = 'goobs-links', DB_NAME = 'goobs-links-db', SCHEMA = 1;
-const MAX_LINKS = 2000, MAX_GROUPS = 100, RECENT_N = 4;
+const MAX_LINKS = 2000, MAX_GROUPS = 100, MAX_SECS = 300, RECENT_N = 4;
 const COLORS = ['#2563eb', '#0d9488', '#ea580c', '#9333ea', '#e11d48', '#16a34a', '#ca8a04', '#0891b2', '#7c3aed', '#db2777', '#4d7c0f', '#b45309'];
 /* drawn icons you can pick for any link (stored in the icon field as §name) */
 const DRAWN = {
@@ -964,7 +969,7 @@ const DRAWN = {
 const drawnOf = e => (/^§(\w+)$/.test(str(e)) && DRAWN[e.slice(1)] ? e.slice(1) : '');
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'all', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], links: [], lastGroup: '', homeName: '', tab: '', tabRows: 1 });
+const defaultState = () => ({ v: 1, view: 'all', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], sections: [], links: [], lastGroup: '', homeName: '', tab: '', tabRows: 1 });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
 /* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
 const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
@@ -977,6 +982,11 @@ const linkUrl = u => { if (appOf(u)) return u; const s = safeUrl(u); return s &&
 const route = () => { const h = location.hash.slice(1); return APPS[h] ? h : ''; };
 const ordOf = v => (isNum(v) ? v : null);
 function normGroup(g) { if (!g || typeof g !== 'object') return null; const name = clampStr(g.name, 40); return name ? { id: clampStr(g.id, 40) || uid(), name, o: ordOf(g.o) } : null; }
+/* a section: a heading inside a tab (Home is tab ''), with its own links under it */
+function normSection(x, tabIds) { if (!x || typeof x !== 'object') return null; const name = clampStr(x.name, 40), tab = str(x.tab); return name && (tab === '' || tabIds.has(tab)) ? { id: clampStr(x.id, 40) || uid(), name, tab, o: ordOf(x.o) } : null; }
+function normSections(list, tabIds) { const seen = new Set(), out = (Array.isArray(list) ? list : []).map(x => normSection(x, tabIds)).filter(x => x && !seen.has(x.id) && seen.add(x.id)).slice(0, MAX_SECS); out.forEach((x, i) => { if (x.o == null) x.o = i; }); return out.sort(byOrd); }
+/* a link's section must be one in its own tab; otherwise it sits at the top of the tab, above the sections */
+function fixSecs(s = state) { const ids = new Set(s.groups.map(g => g.id)), at = new Map(s.sections.map(x => [x.id, x.tab])); for (const l of s.links) { const t = ids.has(l.group) ? l.group : ''; if (l.sec && at.get(l.sec) !== t) l.sec = ''; } }
 function normLink(l, groupIds) {
   if (!l || typeof l !== 'object') return null;
   const url = linkUrl(l.url); if (!url) return null;
@@ -985,7 +995,7 @@ function normLink(l, groupIds) {
     id: clampStr(l.id, 40) || uid(), name: clampStr(l.name, 60) || autoName(url), url,
     group: groupIds.has(str(l.group)) ? str(l.group) : '', fav: !!l.fav, emoji: clampStr(l.emoji, 16),
     icon: icon === 'none' || /^https:\/\/[^\s"'<>]{1,500}$/.test(icon) ? icon : '', iconAt: isNum(l.iconAt) ? l.iconAt : 0,
-    img: okImg(l.img) ? l.img : '', note: clampStr(l.note, 300), added: isNum(l.added) ? l.added : Date.now(), o: ordOf(l.o), a: ordOf(l.a), opened: isNum(l.opened) ? l.opened : 0, uses: isNum(l.uses) ? Math.max(0, Math.floor(l.uses)) : 0
+    sec: clampStr(l.sec, 40), img: okImg(l.img) ? l.img : '', note: clampStr(l.note, 300), added: isNum(l.added) ? l.added : Date.now(), o: ordOf(l.o), a: ordOf(l.a), opened: isNum(l.opened) ? l.opened : 0, uses: isNum(l.uses) ? Math.max(0, Math.floor(l.uses)) : 0
   };
 }
 /* Built-in TV and Calendar are added to the list once per device (shown at the top until you put them in a group); delete them and they stay gone.
@@ -1023,15 +1033,25 @@ function normState(s) {
   const ids = new Set(groups.map(g => g.id)), lseen = new Set();
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
-  const out = { v: 1, view: 'all', groups, links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', homeName: clampStr(s.homeName, 40), tab: ids.has(str(s.tab)) ? str(s.tab) : '', tabRows: s.tabRows === 2 ? 2 : 1, theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
+  const out = { v: 1, view: 'all', groups, sections: normSections(s.sections, ids), links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', homeName: clampStr(s.homeName, 40), tab: ids.has(str(s.tab)) ? str(s.tab) : '', tabRows: s.tabRows === 2 ? 2 : 1, theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
     builtins: (Array.isArray(s.builtins) ? s.builtins : []).filter(k => APPS[k]), cal: normCal(s.cal), planner: normPlanner(s.planner), rel: normRel(s.rel), tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all',
       by: s.tv && s.tv.by === 'net' ? 'net' : 'time', nets: s.tv && Array.isArray(s.tv.nets) ? [...new Set(s.tv.nets.filter(n => typeof n === 'string').map(n => clampStr(n, 40)).filter(Boolean))].slice(0, 60) : ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] } };
-  resort(out); fillAllOrder(out); return out;
+  resort(out); fillAllOrder(out); fixSecs(out); return out;
 }
 /* "All icons" has its own order (a), set by dragging there; links without one follow the grouped order */
 function groupedOrder(s = state) { const gi = new Map(s.groups.map((g, i) => [g.id, i])), at = g => (gi.has(g) ? gi.get(g) : 1e9); return s.links.slice().sort((x, y) => at(x.group) - at(y.group) || x.o - y.o); }
 function fillAllOrder(s = state) { if (!s.links.some(l => l.a == null)) return; const max = s.links.reduce((m, l) => (l.a == null ? m : Math.max(m, l.a)), -1); let n = max + 1; for (const l of groupedOrder(s)) if (l.a == null) l.a = n++; }
 const allOrder = () => state.links.slice().sort((x, y) => x.a - y.a || x.o - y.o);
+/* put a link in section sid ('' = above the sections) of its tab, at index i there */
+function placeInSec(id, sid, i) {
+  const l = linkById(id); if (!l) return;
+  const t = tabOf(l); if (sid && (!secById(sid) || secById(sid).tab !== t)) sid = '';
+  l.sec = sid;
+  const rest = secLinks(t, sid).filter(x => x !== l); i = Math.max(0, Math.min(i, rest.length));
+  const prev = rest[i - 1], next = rest[i];
+  l.a = prev && next ? (prev.a + next.a) / 2 : prev ? prev.a + 1 : next ? next.a - 1 : nextAll();
+  commit();
+}
 /* move one link to sit at index i among the links in its tab (only that link's number changes, so only it syncs) */
 function placeInTab(id, i) {
   const l = linkById(id); if (!l) return;
@@ -1124,24 +1144,28 @@ const tabsList = () => [{ id: HOME, name: tabName(HOME) }, ...state.groups];
 const tabOf = l => (groupById(l.group) ? l.group : HOME);
 const curTab = () => (state.tab && groupById(state.tab) ? state.tab : HOME);
 const tabLinks = t => allOrder().filter(l => tabOf(l) === t);
+const secById = id => state.sections.find(x => x.id === id) || null;
+const secsOf = t => state.sections.filter(x => x.tab === t).sort(byOrd);
+const secLinks = (t, sid) => tabLinks(t).filter(l => (secById(l.sec) ? l.sec : '') === sid);
 function save() { if (db) idbPut(db, 'state', JSON.stringify(state)).catch(e => { console.error(e); toast('Couldn’t save on this device.'); }); }
 let committing = false;
 function commit() { save(); committing = true; try { Sync.touch(); } finally { committing = false; } render(); }
 
 /* ---- sync: the same links on every device you sign in on (Firebase, the same account setup as Grocery and To-do).
    What syncs: links, groups and their order. What stays on each device: Recent, the list/icon view, cached site icons. ---- */
-const C_GROUPS = 'linkGroups', C_LINKS = 'links', C_TRIPS = 'trips', C_FOLLOWS = 'linkFollows';   /* linkFollows: movies you watch for and TV shows you follow */   /* trips: Planner's trips and events, for the Calendar */
+const C_GROUPS = 'linkGroups', C_SECS = 'linkSections', C_LINKS = 'links', C_TRIPS = 'trips', C_FOLLOWS = 'linkFollows';   /* linkFollows: movies you watch for and TV shows you follow */   /* trips: Planner's trips and events, for the Calendar */
 const syncModel = {
-  colls: [C_GROUPS, C_LINKS, C_TRIPS, C_FOLLOWS],
+  colls: [C_GROUPS, C_SECS, C_LINKS, C_TRIPS, C_FOLLOWS],
   toEntities() {
     return [...state.groups.map(g => ({ coll: C_GROUPS, id: g.id, data: { name: g.name, o: g.o } })), ...(state.homeName ? [{ coll: C_GROUPS, id: HOME_DOC, data: { name: state.homeName, home: true } }] : []),
-      ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, fav: l.fav, emoji: l.emoji, img: l.img, note: l.note, added: l.added, o: l.o, a: l.a } })),
+      ...state.sections.map(x => ({ coll: C_SECS, id: x.id, data: { name: x.name, tab: x.tab, o: x.o } })),
+      ...state.links.map(l => ({ coll: C_LINKS, id: l.id, data: { name: l.name, url: l.url, group: l.group, sec: l.sec, fav: l.fav, emoji: l.emoji, img: l.img, note: l.note, added: l.added, o: l.o, a: l.a } })),
       ...state.planner.map(p => ({ coll: C_TRIPS, id: p.id, data: p.data })),
       ...state.rel.follow.map(f => ({ coll: C_FOLLOWS, id: 'm' + f.id, data: { kind: 'movie', ref: f.id, name: f.title, poster: f.poster } })),
       ...state.tv.follow.map(f => ({ coll: C_FOLLOWS, id: 't' + f.id, data: { kind: 'tv', ref: f.id, name: f.name, net: f.net } }))];   /* handed back exactly as Planner wrote them */
   },
   apply(out) {
-    const before = JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow, state.homeName]);
+    const before = JSON.stringify([state.groups, state.sections, state.links, state.planner, state.rel.follow, state.tv.follow, state.homeName]);
     const fl = (out[C_FOLLOWS] || []).map(r => r.data || {});
     state.rel.follow = normRel({ follow: fl.filter(d => d.kind === 'movie').map(d => ({ id: d.ref, title: d.name, poster: d.poster })) }).follow;
     state.tv.follow = normFollow({ follow: fl.filter(d => d.kind === 'tv').map(d => ({ id: d.ref, name: d.name, net: d.net })) });
@@ -1159,8 +1183,9 @@ const syncModel = {
     }
     /* the same address added on two devices before they were signed in: keep the first one */
     links.sort(byOrd); const urls = new Set();
-    state.groups = groups; state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort(); fillAllOrder();
-    if (JSON.stringify([state.groups, state.links, state.planner, state.rel.follow, state.tv.follow, state.homeName]) === before) return;
+    state.groups = groups; state.sections = normSections((out[C_SECS] || []).map(r => ({ ...r.data, id: r.id })), gids);
+    state.links = links.filter(l => !urls.has(l.url) && urls.add(l.url)); resort(); fillAllOrder(); fixSecs();
+    if (JSON.stringify([state.groups, state.sections, state.links, state.planner, state.rel.follow, state.tv.follow, state.homeName]) === before) return;
     relWarm().then(c => { if (c) renderIfSafe(); });
     save(); renderIfSafe();
   }
@@ -1190,7 +1215,7 @@ function linkHTML(l) {
   return `<a class="gi" ${open} title="${esc(app ? APPS[app].sub() : l.note || shortUrl(l.url))}">${tileHTML(l)}<span class="nm">${esc(l.name)}</span>${out ? `<span class="nbadge" aria-label="${out} out this week">${out}</span>` : ''}</a>`;
 }
 const block = list => `<div class="card grid">${list.map(linkHTML).join('')}</div>`;
-function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + tabName(tabOf(l)) + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
+function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + tabName(tabOf(l)) + ' ' + (secById(l.sec) ? secById(l.sec).name : '') + ' ' + l.note).toLowerCase(); return words.every(w => hay.includes(w)); }
 function render() {
   applyTheme();
   const app = route();
@@ -1223,11 +1248,18 @@ function render() {
     for (const x of tabsList()) { const h = hits.filter(l => tabOf(l) === x.id); if (h.length) html += `<div class="sec-h"><span>${esc(x.name)}</span><span>${h.length}</span></div>${block(h)}`; }
     view.innerHTML = html; return;
   }
-  if (ui.edit) {
-    html += `<p class="arrange-tip">Drag icons to rearrange, or onto a tab below to move them there. Tap an icon to edit it, a tab to rename it.</p><div class="card grid arrange" id="allGrid">${list.map(l => `<a class="gi" href="#" data-id="${esc(l.id)}">${tileHTML(l)}<span class="nm">${esc(l.name)}</span></a>`).join('')}</div>`;
+  const secs = secsOf(t), top = secLinks(t, '');
+  if (ui.edit) {   /* each section is its own grid: drag icons within one, between them, or onto a tab below */
+    const gi = l => `<a class="gi" href="#" data-id="${esc(l.id)}">${tileHTML(l)}<span class="nm">${esc(l.name)}</span></a>`;
+    html += `<p class="arrange-tip">Drag icons to rearrange, into another section, or onto a tab below. Tap an icon to edit it, a tab to rename it.</p>`;
+    if (top.length || !secs.length) html += `<div class="card grid arrange" data-sec="" data-empty="${secs.length ? 'Drag icons here to put them above the sections' : 'Drag icons here'}">${top.map(gi).join('')}</div>`;
+    for (const x of secs) html += `<div class="sec-h sec-ed"><span>${esc(x.name)}</span><button type="button" class="btn small ghost" data-act="sedit" data-id="${esc(x.id)}">✎ Edit section</button></div><div class="card grid arrange sec" data-sec="${esc(x.id)}" data-empty="Drag icons here">${secLinks(t, x.id).map(gi).join('')}</div>`;
+    if (secs.length && !top.length) html += `<div class="sec-h"><span>No section</span></div><div class="card grid arrange sec" data-sec="" data-empty="Drag icons here to take them out of a section"></div>`;
     html += toolsHTML();
-  } else if (list.length) html += block(list);
-  else html += `<div class="empty tabempty"><h2>Nothing in ${esc(tabName(t))} yet</h2><p>Tap <b>+</b> to add a link here, or tap Edit and drag icons onto this tab.</p></div>`;
+  } else if (list.length || secs.length) {
+    if (top.length) html += block(top);
+    for (const x of secs) { const sl = secLinks(t, x.id); html += `<div class="sec-h"><span>${esc(x.name)}</span><span>${sl.length || ''}</span></div>${sl.length ? block(sl) : '<div class="card secempty">No links here yet. Tap Edit and drag some in.</div>'}`; }
+  } else html += `<div class="empty tabempty"><h2>Nothing in ${esc(tabName(t))} yet</h2><p>Tap <b>+</b> to add a link here, or tap Edit and drag icons onto this tab.</p></div>`;
   view.innerHTML = html;
 }
 /* the tab bar: always at the bottom of the links screen */
@@ -1253,11 +1285,11 @@ function showTab(id) {
 /* a link dropped on another tab goes to the end of that tab */
 function moveToTab(id, tab) {
   const l = linkById(id); if (!l || tabOf(l) === tab) return;
-  l.group = tab; l.a = nextAll(); commit(); toast(`Moved ${l.name} to ${tabName(tab)}`);
+  l.group = tab; l.sec = ''; l.a = nextAll(); commit(); toast(`Moved ${l.name} to ${tabName(tab)}`);
 }
 function toolsHTML() {
   const missing = Object.keys(APPS).filter(k => !state.links.some(l => appOf(l.url) === k));
-  return `<div class="foot"><button type="button" class="btn" data-act="tnew">New tab</button><button type="button" class="btn" data-act="tedit">Rename this tab</button></div>
+  return `<div class="foot"><button type="button" class="btn primary" data-act="snew">New section</button><button type="button" class="btn" data-act="tnew">New tab</button><button type="button" class="btn" data-act="tedit">Rename this tab</button></div>
     <div class="sec-h"><span>Tab bar on this device</span></div><div class="seg" role="group" aria-label="Tab bar rows"><button type="button" class="chip" data-act="rows" data-n="1" aria-pressed="${state.tabRows !== 2}">One row</button><button type="button" class="chip" data-act="rows" data-n="2" aria-pressed="${state.tabRows === 2}">Two rows</button></div>
     ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${{ tv: '📺', calendar: '📅', releases: '📀', vapay: '🎖️', calc: '🧮' }[k]} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
     <div class="sec-h"><span>Bring in and back up</span></div>
@@ -1267,6 +1299,7 @@ function toolsHTML() {
 }
 
 /* ---- add / edit ---- */
+function secOptions(t) { return [['', 'None (top of the tab)'], ...(t === '__new' ? [] : secsOf(t).map(x => [x.id, x.name])), ['__new', 'New section…']]; }
 function groupOptions() { return [...tabsList().map(t => [t.id, t.name]), ['__new', 'New tab…']]; }
 function linkDialog(l) {
   const isNew = !l, pick = { img: l && l.img ? l.img : '' };   /* your own image, if you pick one (the emoji box holds the other choices) */
@@ -1277,6 +1310,8 @@ function linkDialog(l) {
       { name: 'name', label: 'Name', value: l ? l.name : '', placeholder: 'Filled in from the address' },
       { name: 'group', label: 'Tab', type: 'select', value: l ? tabOf(l) : curTab(), options: groupOptions() },
       { name: 'newGroup', label: 'New tab name', value: '', placeholder: 'Only if you picked New tab…' },
+      { name: 'sec', label: 'Section', type: 'select', value: l ? (secById(l.sec) ? l.sec : '') : (ui.addSec && secById(ui.addSec) && secById(ui.addSec).tab === curTab() ? ui.addSec : ''), options: secOptions(l ? tabOf(l) : curTab()) },
+      { name: 'newSec', label: 'New section name', value: '', placeholder: 'e.g. Bills, Banking' },
       { name: 'emoji', label: 'Icon', value: l ? l.emoji : '' },
       { name: 'note', label: 'Note (optional, found by search)', value: l ? l.note : '' }
     ],
@@ -1287,9 +1322,13 @@ function linkDialog(l) {
       const url = linkUrl(v.url); if (!url) return 'Enter a web address, like espn.com or https://…';
       const dup = state.links.find(x => x.url === url && x !== l); if (dup) return `That address is already saved as “${dup.name}”.`;
       let group = v.group;
+      if (v.sec === '__new' && !clampStr(v.newSec, 40)) return 'Type a name for the new section.';
       if (group === '__new') { group = ensureGroup(v.newGroup); if (!group) return 'Type a name for the new tab.'; }
-      const rec = { name: clampStr(v.name, 60) || autoName(url), url, group, emoji: pick.img ? '' : clampStr(v.emoji, 16), img: pick.img, note: clampStr(v.note, 300) };
-      if (l) { if (l.url !== url) { l.icon = ''; l.iconAt = 0; } if (tabOf(l) !== group) l.a = nextAll(); Object.assign(l, rec); }
+      let sec = v.sec;
+      if (sec === '__new') { sec = makeSection(group, v.newSec); if (!sec) return 'That’s the most sections this app holds.'; }
+      if (sec && (!secById(sec) || secById(sec).tab !== group)) sec = '';
+      const rec = { name: clampStr(v.name, 60) || autoName(url), url, group, sec, emoji: pick.img ? '' : clampStr(v.emoji, 16), img: pick.img, note: clampStr(v.note, 300) };
+      if (l) { if (l.url !== url) { l.icon = ''; l.iconAt = 0; } if (tabOf(l) !== group || (secById(l.sec) ? l.sec : '') !== sec) l.a = nextAll(); Object.assign(l, rec); }
       else { if (state.links.length >= MAX_LINKS) return 'That’s the most links this app holds.'; state.links.push(normLink({ ...rec, id: uid(), added: Date.now(), o: nextOrd(state.links), a: nextAll() }, new Set(state.groups.map(g => g.id)))); }
       commit(); if (isNew) toast(group === curTab() ? `Added ${rec.name}` : `Added ${rec.name} to ${tabName(group)}`);
     }
@@ -1302,6 +1341,10 @@ function linkDialog(l) {
   if (l && appOf(l.url)) { fieldOf('url').hidden = true; $$('#dlg [data-x]').forEach(b => { b.hidden = true; }); $('#dlg h2').textContent = `Edit ${APPS[appOf(l.url)].name} (built in)`; }
   const grpSync = () => { fieldOf('newGroup').hidden = f.elements.group.value !== '__new'; if (!fieldOf('newGroup').hidden) f.elements.newGroup.focus(); };
   f.elements.group.addEventListener('change', grpSync); fieldOf('newGroup').hidden = f.elements.group.value !== '__new';
+  /* the Section list follows the chosen tab */
+  const secSync = () => { fieldOf('newSec').hidden = f.elements.sec.value !== '__new'; };
+  f.elements.group.addEventListener('change', () => { const sel = f.elements.sec; sel.innerHTML = secOptions(f.elements.group.value).map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join(''); sel.value = ''; secSync(); });
+  f.elements.sec.addEventListener('change', () => { secSync(); if (!fieldOf('newSec').hidden) f.elements.newSec.focus(); }); secSync();
   if (!(l && l.note)) { fieldOf('note').hidden = true; fieldOf('note').insertAdjacentHTML('afterend', '<button type="button" class="btn small ghost more-btn" id="moreBtn">Add a note</button>'); $('#moreBtn').onclick = () => { fieldOf('note').hidden = false; $('#moreBtn').remove(); f.elements.note.focus(); }; }
   /* icon: a preview and a button that opens the picker (drawn icons, emoji, your own image) */
   const emoEl = f.elements.emoji; emoEl.type = 'hidden';
@@ -1333,6 +1376,48 @@ function moveGroup(id, dir) {
   if (i < 0 || j < 0 || j >= state.groups.length) return;
   const a = state.groups[i], b = state.groups[j]; [a.o, b.o] = [b.o, a.o]; resort(); commit();
 }
+function makeSection(t, name) {
+  if (state.sections.length >= MAX_SECS) return '';
+  const x = { id: uid(), name: clampStr(name, 40), tab: t, o: nextOrd(secsOf(t)) }; state.sections.push(x); return x.id;
+}
+function moveSection(id, dir) {
+  const x = secById(id); if (!x) return; const list = secsOf(x.tab), i = list.indexOf(x), j = i + dir;
+  if (j < 0 || j >= list.length) return;
+  const y = list[j]; [x.o, y.o] = [y.o, x.o]; commit();
+}
+/* add a section to the tab you're on (id undefined) or rename / move / delete one */
+function secDialog(id) {
+  const isNew = id === undefined, x = isNew ? null : secById(id); if (!isNew && !x) return;
+  const t = x ? x.tab : curTab(), many = x && secsOf(t).length > 1;
+  formDialog({
+    title: isNew ? `New section in ${tabName(t)}` : 'Edit section',
+    intro: isNew ? 'A heading on this tab with its own group of icons, like Bills or Banking. Add links to it, or drag icons into it in Edit.' : '',
+    fields: [{ name: 'name', label: 'Section name', required: true, value: x ? x.name : '', placeholder: 'e.g. Bills, Banking' }],
+    /* like tabs: Move steps one spot per tap and the box stays open */
+    extra: many ? [{ label: '▲ Move up', onClick: () => { moveSection(x.id, -1); showPos(); } }, { label: '▼ Move down', onClick: () => { moveSection(x.id, 1); showPos(); } }] : [],
+    onDelete: x ? async () => {
+      const n = state.links.filter(l => l.sec === x.id).length;
+      if (n && !(await confirmBox(`Delete the “${x.name}” section?`, `Its ${n} link${n === 1 ? '' : 's'} stay on ${tabName(t)}, above the sections. No links are deleted.`, 'Delete section'))) return false;
+      state.links.forEach(l => { if (l.sec === x.id) { l.sec = ''; l.a = nextAll(); } });
+      state.sections = state.sections.filter(y => y !== x); commit(); return true;
+    } : null,
+    deleteLabel: 'Delete section',
+    submitLabel: isNew ? 'Add section' : 'Done',
+    onSubmit: v => {
+      const name = clampStr(v.name, 40);
+      if (secsOf(t).some(y => y !== x && y.name.toLowerCase() === name.toLowerCase())) return 'This tab already has a section with that name.';
+      if (x) x.name = name; else if (!makeSection(t, name)) return 'That’s the most sections this app holds.';
+      if (isNew && !ui.edit) ui.edit = true;   /* so you can drag icons into it right away */
+      commit();
+    }
+  });
+  const showPos = () => {
+    if (!x) return; const list = secsOf(t), k = list.indexOf(x), b = $$('#dlg [data-x]');
+    if (b[0]) b[0].disabled = k <= 0; if (b[1]) b[1].disabled = k >= list.length - 1;
+    const p = $('#secPos'); if (p) p.textContent = `Section ${k + 1} of ${list.length} on ${tabName(t)}.`;
+  };
+  if (many) { $('#dlg .dlg-err').insertAdjacentHTML('beforebegin', '<p class="hint" id="secPos" aria-live="polite"></p>'); showPos(); }
+}
 /* add a tab (id undefined) or rename / move / delete one. Home is always first and can't be deleted. */
 function tabDialog(id) {
   const isNew = id === undefined, home = id === HOME, g = !isNew && !home ? groupById(id) : null;
@@ -1347,7 +1432,7 @@ function tabDialog(id) {
     onDelete: g ? async () => {
       const n = state.links.filter(l => tabOf(l) === g.id).length;
       if (n && !(await confirmBox(`Delete the “${g.name}” tab?`, `Its ${n} link${n === 1 ? '' : 's'} move to ${tabName(HOME)}. No links are deleted.`, 'Delete tab'))) return false;
-      state.links.forEach(l => { if (l.group === g.id) { l.group = HOME; l.a = nextAll(); } });
+      state.links.forEach(l => { if (l.group === g.id) { l.group = HOME; l.sec = ''; l.a = nextAll(); } }); state.sections = state.sections.filter(x => x.tab !== g.id);
       state.groups = state.groups.filter(x => x !== g); if (state.tab === g.id) state.tab = HOME; commit(); return true;
     } : null,
     deleteLabel: 'Delete tab',
@@ -1445,8 +1530,8 @@ const placeDrag = e => { drag.el.style.transform = ''; const r = drag.el.getBoun
 /* the tab under the finger, if any */
 const tabAt = (x, y) => { const u = document.elementFromPoint(x, y), t = u && u.closest && u.closest('#tabbar [data-tab]'); return t || null; };
 view.addEventListener('pointerdown', e => {
-  const grid = $('#allGrid'); if (!grid || drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
-  const a = e.target.closest('#allGrid .gi'); if (!a) return;
+  if (drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  const a = e.target.closest('.grid.arrange .gi'); if (!a) return;
   e.preventDefault();
   const r = a.getBoundingClientRect();
   drag = { el: a, id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top, moved: false, last: null, tab: null };
@@ -1457,11 +1542,19 @@ window.addEventListener('pointermove', e => {
   e.preventDefault();
   const tb = tabAt(e.clientX, e.clientY);
   if (tb !== drag.tab) { if (drag.tab) drag.tab.classList.remove('drop'); drag.tab = tb && tb.dataset.tab !== curTab() ? tb : null; if (drag.tab) drag.tab.classList.add('drop'); }
-  const grid = $('#allGrid'), under = !tb && document.elementFromPoint(e.clientX, e.clientY), t = under && under.closest && under.closest('#allGrid .gi');
+  const under = !tb && document.elementFromPoint(e.clientX, e.clientY), t = under && under.closest && under.closest('.grid.arrange .gi');
   if (t !== drag.last) drag.last = null;
   if (t && t !== drag.el && t !== drag.last) {   /* swap once per icon entered, so one that just slid under the finger doesn't flip back */
-    drag.last = t; const cs = [...grid.children], from = cs.indexOf(drag.el), to = cs.indexOf(t);
-    grid.insertBefore(drag.el, from < to ? t.nextSibling : t);
+    drag.last = t; const grid = t.parentElement;
+    if (grid === drag.el.parentElement) { const cs = [...grid.children], from = cs.indexOf(drag.el), to = cs.indexOf(t); grid.insertBefore(drag.el, from < to ? t.nextSibling : t); }
+    else grid.insertBefore(drag.el, t);   /* into another section, in front of the icon under the finger */
+  } else if (!t) {   /* over the empty space after a section's last icon (or an empty section): go to its end */
+    const g = under && under.closest && under.closest('.grid.arrange');
+    if (g) {
+      const last = [...g.children].filter(c => c !== drag.el).pop(), r = last && last.getBoundingClientRect();
+      const past = !r || e.clientY > r.bottom || (e.clientY > r.top && e.clientX > r.right);
+      if (past && (g !== drag.el.parentElement || g.lastElementChild !== drag.el)) g.appendChild(drag.el);
+    }
   }
   const barTop = $('#tabbar').hidden ? innerHeight : $('#tabbar').getBoundingClientRect().top;
   if (e.clientY < 70) window.scrollBy(0, -12); else if (e.clientY > barTop - 60 && e.clientY < barTop) window.scrollBy(0, 12);   /* scroll near the edges, but not while over the tabs */
@@ -1474,11 +1567,11 @@ function endDrag(e) {
   if (d.tab) d.tab.classList.remove('drop');
   if (!d.moved) { if (e && e.type === 'pointerup') { const l = linkById(d.el.dataset.id); if (l) linkDialog(l); } return; }
   if (d.tab && e && e.type === 'pointerup') { moveToTab(d.el.dataset.id, d.tab.dataset.tab); return; }
-  const grid = $('#allGrid'); placeInTab(d.el.dataset.id, grid ? [...grid.children].indexOf(d.el) : 0);
+  const grid = d.el.parentElement; placeInSec(d.el.dataset.id, grid && grid.dataset ? grid.dataset.sec || '' : '', grid ? [...grid.children].indexOf(d.el) : 0);
 }
 window.addEventListener('pointerup', endDrag); window.addEventListener('pointercancel', endDrag);
-view.addEventListener('click', e => { if (e.target.closest('#allGrid')) e.preventDefault(); }, true);
-view.addEventListener('contextmenu', e => { if (e.target.closest('#allGrid')) e.preventDefault(); });
+view.addEventListener('click', e => { if (e.target.closest('.grid.arrange')) e.preventDefault(); }, true);
+view.addEventListener('contextmenu', e => { if (e.target.closest('.grid.arrange')) e.preventDefault(); });
 
 /* ---- the tab bar: tap to switch, tap the one you're on to go to the top, press and hold (or tap in Edit) to rename ---- */
 let tabHold = null, tabHeld = false;
@@ -1513,6 +1606,8 @@ view.addEventListener('click', e => {
   switch (el.dataset.act) {
     case 'add': linkDialog(null); break;
     case 'tnew': tabDialog(); break;
+    case 'snew': secDialog(); break;
+    case 'sedit': secDialog(el.dataset.id); break;
     case 'tedit': tabDialog(curTab()); break;
     case 'rows': state.tabRows = +el.dataset.n === 2 ? 2 : 1; save(); render(); break;
     case 'builtin': addBuiltin(el.dataset.k); break;
