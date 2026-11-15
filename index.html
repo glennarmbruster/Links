@@ -377,6 +377,38 @@ a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);col
   .gi .nm{font-size:14px}.gi .ico.calico b{font-size:16px}.gi .ico.calico span{font-size:42px}.gi .star{right:14px}
   .tabs{max-width:1600px;padding:0 16px}.tab{min-height:44px;font-size:16px}
 }
+
+/* desktop: built-in screens (TV, Calendar, Movie releases, VA pay, Calculator) use the extra width */
+.calx,.calmain,.calside{min-width:0}
+@media (min-width:1000px){
+  body[data-app="tv"] .wrap,body[data-app="releases"] .wrap{max-width:1320px;padding:0 28px}
+  body[data-app="calendar"] .wrap{max-width:1600px;padding:0 28px}
+  body[data-app="vapay"] .wrap{max-width:860px}
+  body[data-app="calc"] .wrap{max-width:440px}
+  body[data-app="calc"] .calcapp{min-height:min(720px,calc(100dvh - 104px))}
+  .tvbar,.tvsearch{max-width:900px}
+  .dcols{columns:2;column-gap:24px}
+  .dcols.many{columns:3}
+  .dsec{break-inside:avoid;padding-top:1px}
+  .dsec:has(.tvlist>:nth-child(13)){break-inside:auto}
+  .dcols>.dsec:first-child>.sec-h{margin-top:6px}
+  .tvrow:hover,.calitem:hover{background:var(--soft)}
+  .calx{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+  .calside{position:sticky;top:76px;padding-top:12px}
+  .calside .calday{margin-top:0}
+  .calcard{padding:10px 12px 12px}
+  .calgrid{gap:4px}
+  .calgrid .wd{text-align:left;padding:2px 8px 6px}
+  .calgrid .day{aspect-ratio:auto;height:max(92px,calc((100dvh - 270px) / 6));align-items:stretch;justify-content:flex-start;padding:4px 6px;gap:2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .calgrid .day:hover{background:var(--soft)}
+  .calgrid .day.sel{background:var(--accent-soft);border-color:var(--accent)}
+  .calgrid .day .n{width:28px;height:28px;font-size:15px}
+  .calgrid .dots{display:none}
+  .dls{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .dl{display:block;font-size:12px;line-height:1.35;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:4px;padding:1px 5px;text-align:left;background:var(--soft);color:var(--ink)}
+  .dl.f{background:#fde8e6;color:#b42318}.dl.e{background:var(--accent-soft);color:var(--accent)}.dl.t{background:#dcf5e3;color:#166534}.dl.w{background:#f3e8ff;color:#7e22ce}
+  .dl.more{background:none;color:var(--muted);padding-left:2px}
+}
 </style>
 </head>
 <body>
@@ -1219,6 +1251,7 @@ function matches(l, words) { const hay = (l.name + ' ' + l.url + ' ' + tabName(t
 function render() {
   applyTheme();
   const app = route();
+  document.body.dataset.app = app;
   $('#editBtn').hidden = $('#addBtn').hidden = !!app; $('#backBtn').hidden = !app; $('#syncSlot').hidden = !!app;
   renderTabs();
   if (app) {
@@ -1876,7 +1909,7 @@ function renderTV() {
       const items = pool.filter(x => sameNet(x.net, n));
       html += `<div class="sec-h"><span>${esc(n)}</span><span>${items.length || ''}</span></div>${items.length ? `<div class="card tvlist">${items.map(x => tvRow(x)).join('')}</div>` : `<p class="hint" style="margin:0 4px">Nothing new or live listed${slot === 'prime' ? ' in prime time' : slot === 'now' ? ' right now' : ''}.</p>`}`;
     }
-    view.innerHTML = html + tvFootHTML(off, hit); return;
+    view.innerHTML = html + tvFootHTML(off, hit); deskCols(view); return;
   }
   let lastHour = '';
   if (!list.length && !web.length) html += `<div class="empty"><h2>${words.length ? 'No matches' : slot === 'now' ? 'Nothing new or live right now' : slot === 'prime' ? 'Nothing listed in prime time' : 'Nothing listed'}</h2></div>`;
@@ -1889,6 +1922,7 @@ function renderTV() {
   if (open) html += '</div>';
   if (web.length) html += `<div class="sec-h"><span>Streaming</span><span>${web.length}</span></div><div class="card tvlist">${web.map(x => tvRow(x)).join('')}</div>`;
   view.innerHTML = html + tvFootHTML(off, hit);
+  deskCols(view);
 }
 function tvFootHTML(off, hit) {
   const zone = new Intl.DateTimeFormat([], { timeZoneName: 'short' }).formatToParts(new Date()).find(p => p.type === 'timeZoneName');
@@ -2086,11 +2120,34 @@ async function calLoadWatch() {
     if (route() === 'calendar') renderIfSafe();
   }
 }
+/* desktop (window 1000px and wider): built-in screens use the extra width */
+const DESK = matchMedia('(min-width: 1000px)');
+DESK.addEventListener('change', () => render());
+/* side-by-side sections: each "heading + its list" becomes one block, and the blocks flow into columns */
+function deskCols(box) {
+  if (!DESK.matches) return;
+  const secs = []; let cur = null;
+  for (const k of [...box.children]) {
+    if (k.classList.contains('sec-h')) { cur = [k]; secs.push(cur); }
+    else if (cur && (k.classList.contains('card') || k.classList.contains('hint') || k.classList.contains('foot'))) cur.push(k);
+    else cur = null;
+  }
+  if (secs.length < 2) return;
+  const cols = document.createElement('div'); cols.className = 'dcols' + (secs.length >= 5 ? ' many' : '');
+  secs[0][0].before(cols);
+  for (const x of secs) { const w = document.createElement('div'); w.className = 'dsec'; w.append(...x); cols.append(w); }
+}
+/* desktop month cells list what's on the day (up to 3 lines), like a desk calendar */
+function calCellLines(hol, its) {
+  const lines = [...hol.map(h => [h.fed ? 'f' : 'h', h.name]), ...its.filter(x => x.src !== 'trip' || x.day === 1).map(x => [x.src === 'trip' ? 't' : x.src === 'movie' || x.src === 'tv' ? 'w' : 'e', (x.src === 'trip' ? (x.cruise ? '🚢 ' : '✈️ ') : x.time ? fmtClock(x.time) + ' ' : '') + x.title])];
+  const more = lines.length > 3 ? `<span class="dl more">+${lines.length - 2} more</span>` : '';
+  return `<span class="dls">${lines.slice(0, more ? 2 : 3).map(([c, t]) => `<span class="dl ${c}">${esc(t)}</span>`).join('')}${more}</span>`;
+}
 function renderCalendar() {
   calLoadWatch();
   if (!calUi.sel) calGo(todayIso());
   const { y, m } = calUi, today = todayIso(), first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
-  let html = `<div class="calbar"><label class="calgo"><span>Look up a date</span><input id="cgo" type="date" value="${esc(calUi.sel)}" aria-label="Look up a date"></label>
+  let html = `<div class="calx"><div class="calmain"><div class="calbar"><label class="calgo"><span>Look up a date</span><input id="cgo" type="date" value="${esc(calUi.sel)}" aria-label="Look up a date"></label>
     <button type="button" class="btn small" data-cal="today">Today</button></div>
     <div class="card calcard"><div class="calhead"><button type="button" class="btn small ghost" data-cal="prev" aria-label="Previous month">‹</button>
     <h2>${MONTHS[m]} ${y}</h2><button type="button" class="btn small ghost" data-cal="next" aria-label="Next month">›</button></div>
@@ -2102,9 +2159,9 @@ function renderCalendar() {
     const cls = ['day', out ? 'out' : '', iso === today ? 'today' : '', iso === calUi.sel ? 'sel' : '', fed ? 'fed' : '', d.getDay() === 0 || d.getDay() === 6 ? 'we' : ''].filter(Boolean).join(' ');
     const label = `${WD[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}${hol.length ? ', ' + hol.map(h => h.name).join(', ') : ''}${ev.length ? `, ${ev.length} event${ev.length > 1 ? 's' : ''}` : ''}`;
     html += `<button type="button" class="${cls}" data-cal="pick" data-d="${iso}" aria-label="${esc(label)}" aria-pressed="${iso === calUi.sel}"><span class="n">${d.getDate()}</span>
-      <span class="dots">${hol.length ? `<i class="h${fed ? ' f' : ''}"></i>` : ''}${ev.length ? '<i class="e"></i>' : ''}${trip ? '<i class="t"></i>' : ''}${watch ? '<i class="w"></i>' : ''}</span></button>`;
+      <span class="dots">${hol.length ? `<i class="h${fed ? ' f' : ''}"></i>` : ''}${ev.length ? '<i class="e"></i>' : ''}${trip ? '<i class="t"></i>' : ''}${watch ? '<i class="w"></i>' : ''}</span>${DESK.matches ? calCellLines(hol, its) : ''}</button>`;
   }
-  html += '</div></div>';
+  html += '</div></div></div><div class="calside">';
   // the picked day
   const sd = parseIso(calUi.sel), hol = holidaysOn(calUi.sel), ev = itemsOn(calUi.sel);
   html += `<div class="card calday"><div class="calday-h"><div><div class="wdname">${WD[sd.getDay()]}</div><div class="muted">${MONTHS[sd.getMonth()]} ${sd.getDate()}, ${sd.getFullYear()} · ${esc(relDays(calUi.sel))}</div></div>
@@ -2131,7 +2188,7 @@ function renderCalendar() {
     return `<button type="button" class="calitem" data-cal="goto" data-d="${u.iso}"><span class="when">${esc(d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }))}</span><span class="dot ${u.kind}"></span><span>${esc(u.name)}${u.time ? ` <span class="muted">${esc(fmtClock(u.time))}</span>` : ''}</span></button>`; }).join('')}</div>`;
   html += `<div class="foot calopts"><label class="chk"><input type="checkbox" data-cal="hol"${state.cal.holidays ? ' checked' : ''}> Show US holidays</label></div>
     <p class="hint c">Federal holidays in red. ${sharesPlanner() ? 'Events and trips come from Planner; events you add here go into Planner, shared like any Planner event.' : 'Sign in (on the Links screen) to see Planner’s trips and events here. Until then, events you add stay on this device.'}</p>`;
-  view.innerHTML = html;
+  view.innerHTML = html + '</div></div>';
 }
 /* e: a local event; p: a Planner record { id, data }; neither: new (goes to Planner when signed in) */
 function eventDialog(e, date, p) {
@@ -2406,6 +2463,7 @@ function renderReleases() {
     Dates come from TMDB’s community and can change. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
     <div class="foot"><button type="button" class="btn small ghost" data-rel="refresh">Refresh</button><button type="button" class="btn small ghost" data-rel="key">🔑 Key</button></div>`;
   view.innerHTML = html;
+  deskCols(view);
 }
 function relWatchingHTML() {
   const need = state.rel.follow.filter(f => (!relInfo[f.id] || Date.now() - relInfo[f.id].at > REL_FRESH) && Date.now() - (relDetTried[f.id] || 0) >= 120e3);
