@@ -409,12 +409,34 @@ a.calitem{text-decoration:none}.calitem .tag.e{background:var(--accent-soft);col
   .dl.f{background:#fde8e6;color:#b42318}.dl.e{background:var(--accent-soft);color:var(--accent)}.dl.t{background:#dcf5e3;color:#166534}.dl.w{background:#f3e8ff;color:#7e22ce}
   .dl.more{background:none;color:var(--muted);padding-left:2px}
 }
+
+/* icon size: a choice per device (🎨 button, or Edit), from 60% to 130%; names use up to two lines */
+:root{--isz:1}
+.grid{--ib:60px;--nb:12px;--cb:80px;grid-template-columns:repeat(auto-fill,minmax(calc(var(--cb) * var(--isz)),1fr));row-gap:calc(14px * var(--isz))}
+.gi{gap:calc(6px * var(--isz))}
+.gi .ico{width:calc(var(--ib) * var(--isz));height:calc(var(--ib) * var(--isz));border-radius:calc(var(--ib) * .25 * var(--isz));font-size:calc(var(--ib) * .4 * var(--isz))}
+.gi .ico.emo{font-size:calc(var(--ib) * .567 * var(--isz))}
+.gi .ico.l3{font-size:calc(var(--ib) * .315 * var(--isz))}
+.gi .ico.calico b{font-size:calc(var(--ib) * .195 * var(--isz))}
+.gi .ico.calico span{font-size:calc(var(--ib) * .49 * var(--isz));margin-top:calc(2px * var(--isz))}
+.gi .nm{font-size:max(10px,calc(var(--nb) * var(--isz)));line-height:1.25;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow-wrap:break-word;word-break:normal}
+.nbadge{left:calc(50% + var(--ib) * .3 * var(--isz))}
+.isz{display:flex;align-items:center;gap:8px;margin-top:6px}
+.isz .btn{min-width:56px;font-weight:800}
+.isz .btn .sm{font-size:.75em}
+.isz-v{min-width:52px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.isz .reset{margin-left:auto}
+.dlg-sub{font-size:15px;margin:16px 0 2px}
+@media (min-width:1000px){
+  .grid{--ib:88px;--nb:14px;--cb:124px;row-gap:calc(24px * var(--isz))}
+  .gi{gap:calc(8px * var(--isz))}
+}
 </style>
 </head>
 <body>
 <div class="spooky" aria-hidden="true"><svg class="moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ffe9b0"/><circle cx="38" cy="40" r="7" fill="#f2d48c"/><circle cx="60" cy="62" r="9" fill="#f2d48c"/><circle cx="62" cy="34" r="4" fill="#f2d48c"/></svg><svg class="web" viewBox="0 0 100 100" fill="none" stroke="#e9dcff" stroke-width="1.2"><path d="M0 0L100 30M0 0L80 70M0 0L35 100M0 0L0 100M0 0L100 0"/><path d="M0 22Q12 14 22 0M0 44Q26 30 44 0M0 66Q40 46 66 0M0 88Q55 62 88 0"/></svg><div class="bat b1"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="bat b2"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="bat b3"><svg viewBox="0 0 46 22"><path d="M23 7c1.5-3 3-3 3-3l1 3c4-3 9-4 13-2-2 1-3 3-3 5 3-1 6 0 9 2-5 0-9 2-11 6-2-3-5-4-8-3-1-1-2-3-4-3s-3 2-4 3c-3-1-6 0-8 3-2-4-6-6-11-6 3-2 6-3 9-2 0-2-1-4-3-5 4-2 9-1 13 2l1-3s1.5 0 3 3z" fill="#6a4686"/></svg></div><div class="pumpkins"><svg viewBox="0 0 400 70" preserveAspectRatio="xMidYMax meet"><g fill="#ff7a1a"><ellipse cx="60" cy="50" rx="30" ry="20"/><ellipse cx="46" cy="50" rx="14" ry="19" fill="#e96a10"/><ellipse cx="74" cy="50" rx="14" ry="19" fill="#e96a10"/><rect x="57" y="24" width="6" height="10" rx="2" fill="#4a7a2a"/><ellipse cx="340" cy="54" rx="24" ry="16"/><ellipse cx="329" cy="54" rx="11" ry="15" fill="#e96a10"/><ellipse cx="351" cy="54" rx="11" ry="15" fill="#e96a10"/><rect x="337" y="33" width="5" height="9" rx="2" fill="#4a7a2a"/></g><g fill="#2a1200"><path d="M48 44l6 6h-9zM66 44l6 6h-9zM46 58q14 8 28 0l-4 4-3-3-4 4-3-4-4 4-3-3z"/><path d="M332 49l5 5h-8zM345 49l5 5h-8zM330 60q10 6 20 0l-3 3-3-2-2 3-3-3-3 3z"/></g></svg></div></div>
 <header class="top"><div class="wrap"><button type="button" class="btn small ghost hbtn" id="backBtn" hidden aria-label="Back to links">‹</button><div class="grow"><h1 id="title">Links</h1><div class="sub" id="sub"></div></div>
-  <span id="syncSlot"></span><button type="button" class="btn small ghost hbtn" id="viewBtn" aria-label="Theme">🎨</button>
+  <span id="syncSlot"></span><button type="button" class="btn small ghost hbtn" id="viewBtn" aria-label="Theme and icon size" title="Theme and icon size">🎨</button>
   <button type="button" class="btn small ghost" id="editBtn">Edit</button>
   <button type="button" class="btn small primary hbtn" id="addBtn" aria-label="Add a link">+</button>
 </div></header>
@@ -591,7 +613,7 @@ function askDialog({ title, body = '', buttons }) {
     d.innerHTML = `<div class="dlg-form"><h2>${esc(title)}</h2>${body ? `<div class="ask-body">${body}</div>` : ''}
       <div class="dlg-actions ask-actions">${buttons.map((b, i) => `<button type="button" class="btn ${b.kind || ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
     const finish = v => { if (done) return; done = true; d.close(); resolve(v); };
-    $$('button', d).forEach(btn => { btn.onclick = () => finish(buttons[+btn.dataset.i].value); });
+    $$('.ask-actions button', d).forEach(btn => { btn.onclick = () => finish(buttons[+btn.dataset.i].value); });   /* only the dialog's own buttons close it */
     d.oncancel = () => { done = true; resolve(undefined); };
     d.showModal();
   });
@@ -974,8 +996,21 @@ async function syncAction(a) {
 /* themes: [id, label, swatch colours, status bar colour]; auto follows the phone's light/dark setting */
 const THEMES = [{ id: 'auto', label: 'Phone', sw: ['#f3f5f9', '#0e1116'] }, { id: 'light', label: 'Light', sw: ['#f3f5f9', '#2563eb'], bar: '#f3f5f9' },
   { id: 'blue', label: 'Blue', sw: ['#141b28', '#8eaedf'], bar: '#141b28' }, { id: 'halloween', label: 'Halloween', sw: ['#1c1026', '#ff7a1a'], bar: '#1c1026' }];
+/* icon size on this device: smaller fits more icons in a row; names and icons scale together */
+const ISZ = [0.6, 0.7, 0.8, 0.9, 1, 1.15, 1.3];
+const iszHTML = () => `<div class="isz" role="group" aria-label="Icon size on this device"><button type="button" class="btn" data-isz="-1" aria-label="Smaller icons"${state.isz === ISZ[0] ? ' disabled' : ''}><span class="sm">A</span>−</button><span class="isz-v" aria-live="polite">${Math.round(state.isz * 100)}%</span><button type="button" class="btn" data-isz="1" aria-label="Larger icons"${state.isz === ISZ[ISZ.length - 1] ? ' disabled' : ''}>A+</button><button type="button" class="btn ghost small reset" data-isz="0"${state.isz === 1 ? ' disabled' : ''}>Reset</button></div>`;
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-isz]'); if (!b) return;
+  e.preventDefault();
+  const d = +b.dataset.isz, i = Math.max(0, ISZ.indexOf(state.isz));
+  state.isz = d === 0 ? 1 : ISZ[Math.min(ISZ.length - 1, Math.max(0, i + d))];
+  save(); applyTheme();
+  $$('.isz').forEach(g => { g.outerHTML = iszHTML(); });
+  const again = $(`.isz [data-isz="${d}"]`, $('dialog[open]') || document); if (again && !again.disabled) again.focus();
+});
 function applyTheme(id = state.theme) {
   const t = THEMES.find(x => x.id === id) || THEMES[0], root = document.documentElement;
+  root.style.setProperty('--isz', String(state.isz || 1));
   if (t.id === 'auto') root.removeAttribute('data-theme'); else if (root.getAttribute('data-theme') !== t.id) root.setAttribute('data-theme', t.id);
   const metas = $$('meta[name="theme-color"]');
   metas.forEach((m, i) => { if (!m.dataset.orig) m.dataset.orig = m.content; m.content = t.bar || m.dataset.orig; });
@@ -1001,7 +1036,7 @@ const DRAWN = {
 const drawnOf = e => (/^§(\w+)$/.test(str(e)) && DRAWN[e.slice(1)] ? e.slice(1) : '');
 
 /* ---- model ---- */
-const defaultState = () => ({ v: 1, view: 'all', theme: 'auto', builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], sections: [], links: [], lastGroup: '', homeName: '', tab: '', tabRows: 1 });
+const defaultState = () => ({ v: 1, view: 'all', theme: 'auto', isz: 1, builtins: [], tv: { follow: [], slot: 'all', by: 'time', nets: ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] }, cal: { events: [], holidays: true }, planner: [], rel: { type: 'disc', view: 'list', follow: [] }, groups: [], sections: [], links: [], lastGroup: '', homeName: '', tab: '', tabRows: 1 });
 const clampStr = (v, n) => str(v).trim().slice(0, n);
 /* built-in screens that sit in your list like any link (address app:tv / app:calendar) */
 const APPS = { tv: { name: 'TV listings', emoji: '📺', sub: () => 'New and live episodes' },
@@ -1065,7 +1100,7 @@ function normState(s) {
   const ids = new Set(groups.map(g => g.id)), lseen = new Set();
   const links = (Array.isArray(s.links) ? s.links : []).map(l => normLink(l, ids)).filter(l => l && !lseen.has(l.id) && lseen.add(l.id)).slice(0, MAX_LINKS);
   groups.forEach((g, i) => { if (g.o == null) g.o = i; }); links.forEach((l, i) => { if (l.o == null) l.o = i; });
-  const out = { v: 1, view: 'all', groups, sections: normSections(s.sections, ids), links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', homeName: clampStr(s.homeName, 40), tab: ids.has(str(s.tab)) ? str(s.tab) : '', tabRows: s.tabRows === 2 ? 2 : 1, theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
+  const out = { v: 1, view: 'all', groups, sections: normSections(s.sections, ids), links, lastGroup: ids.has(str(s.lastGroup)) ? str(s.lastGroup) : '', homeName: clampStr(s.homeName, 40), tab: ids.has(str(s.tab)) ? str(s.tab) : '', tabRows: s.tabRows === 2 ? 2 : 1, isz: ISZ.includes(+s.isz) ? +s.isz : 1, theme: THEMES.some(t => t.id === s.theme) ? s.theme : 'auto',
     builtins: (Array.isArray(s.builtins) ? s.builtins : []).filter(k => APPS[k]), cal: normCal(s.cal), planner: normPlanner(s.planner), rel: normRel(s.rel), tv: { follow: normFollow(s.tv), slot: s.tv && ['all', 'now', 'prime'].includes(s.tv.slot) ? s.tv.slot : 'all',
       by: s.tv && s.tv.by === 'net' ? 'net' : 'time', nets: s.tv && Array.isArray(s.tv.nets) ? [...new Set(s.tv.nets.filter(n => typeof n === 'string').map(n => clampStr(n, 40)).filter(Boolean))].slice(0, 60) : ['ABC', 'CBS', 'NBC', 'FOX', 'The CW'] } };
   resort(out); fillAllOrder(out); fixSecs(out); return out;
@@ -1324,6 +1359,7 @@ function toolsHTML() {
   const missing = Object.keys(APPS).filter(k => !state.links.some(l => appOf(l.url) === k));
   return `<div class="foot"><button type="button" class="btn primary" data-act="snew">New section</button><button type="button" class="btn" data-act="tnew">New tab</button><button type="button" class="btn" data-act="tedit">Rename this tab</button></div>
     <div class="sec-h"><span>Tab bar on this device</span></div><div class="seg" role="group" aria-label="Tab bar rows"><button type="button" class="chip" data-act="rows" data-n="1" aria-pressed="${state.tabRows !== 2}">One row</button><button type="button" class="chip" data-act="rows" data-n="2" aria-pressed="${state.tabRows === 2}">Two rows</button></div>
+    <div class="sec-h"><span>Icon size on this device</span></div>${iszHTML()}
     ${missing.length ? `<div class="sec-h"><span>Built in</span></div><div class="foot" style="margin-top:4px">${missing.map(k => `<button type="button" class="btn" data-act="builtin" data-k="${k}">Add ${{ tv: '📺', calendar: '📅', releases: '📀', vapay: '🎖️', calc: '🧮' }[k]} ${esc(APPS[k].name)}</button>`).join('')}</div>` : ''}
     <div class="sec-h"><span>Bring in and back up</span></div>
     <div class="foot" style="margin-top:4px"><button type="button" class="btn" data-act="import-text">Paste a list</button><button type="button" class="btn" data-act="copy-tab">Copy this tab as a list</button><button type="button" class="btn" data-act="copy-all">Copy all tabs as a list</button><button type="button" class="btn" data-act="import-safari">Safari bookmarks file</button><button type="button" class="btn" data-act="backup">Back up</button><button type="button" class="btn" data-act="restore">Restore</button></div>
@@ -1655,7 +1691,7 @@ $('#tabbar').addEventListener('click', e => {
 });
 
 $('#addBtn').onclick = () => linkDialog(null);
-$('#viewBtn').onclick = () => askDialog({ title: 'Theme', body: `<p class="muted">Each device keeps its own theme.</p>${themesHTML()}`, buttons: [{ label: 'Done', value: null, kind: 'primary' }] });
+$('#viewBtn').onclick = () => askDialog({ title: 'Theme and icon size', body: `<p class="muted">Each device keeps its own theme and icon size.</p>${themesHTML()}<h3 class="dlg-sub">Icon size</h3>${iszHTML()}`, buttons: [{ label: 'Done', value: null, kind: 'primary' }] });
 $('#editBtn').onclick = () => { ui.edit = !ui.edit; render(); };
 /* TV and Calendar are #tv and #calendar, so the phone's back swipe works too */
 $('#backBtn').onclick = () => { if (ui.fromLinks) history.back(); else { history.replaceState(null, '', location.pathname + location.search); render(); } };
